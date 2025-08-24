@@ -6,13 +6,193 @@ import asyncio
 from datetime import datetime, timedelta
 import ta  # Technical Analysis library
 from typing import List, Dict, Any, Optional, Union
-
-# This would be replaced with actual Angel One API client
-# from angel_one_api import AngelOneClient
+import requests
+import pyotp
+import json
+from ..utils.config import ANGEL_ONE_API_KEY, ANGEL_ONE_CLIENT_ID, ANGEL_ONE_PASSWORD
 
 logger = logging.getLogger(__name__)
 
-# Placeholder for Angel One API client
+class AngelOneClient:
+    """Real Angel One SmartAPI client implementation"""
+    
+    def __init__(self, api_key: str, client_id: str, password: str, totp_token: str = None):
+        self.api_key = api_key
+        self.client_id = client_id
+        self.password = password
+        self.totp_token = totp_token
+        self.base_url = "https://apiconnect.angelone.in"
+        self.auth_token = None
+        self.refresh_token = None
+        self.feed_token = None
+        self.connected = False
+        self.session = requests.Session()
+        
+    async def connect(self):
+        """Authenticate and establish connection to Angel One API"""
+        try:
+            # Generate TOTP if token is provided
+            totp = None
+            if self.totp_token:
+                totp = pyotp.TOTP(self.totp_token).now()
+            
+            # Login payload
+            login_data = {
+                "clientcode": self.client_id,
+                "password": self.password
+            }
+            
+            if totp:
+                login_data["totp"] = totp
+            
+            # Login request
+            headers = {
+                "Content-Type": "application/json",
+                "Accept": "application/json",
+                "X-UserType": "USER",
+                "X-SourceID": "WEB",
+                "X-ClientLocalIP": "127.0.0.1",
+                "X-ClientPublicIP": "127.0.0.1",
+                "X-MACAddress": "00:00:00:00:00:00",
+                "X-PrivateKey": self.api_key
+            }
+            
+            response = self.session.post(
+                f"{self.base_url}/rest/auth/angelbroking/user/v1/loginByPassword",
+                headers=headers,
+                json=login_data
+            )
+            
+            if response.status_code == 200:
+                data = response.json()
+                if data.get('status'):
+                    self.auth_token = data['data']['jwtToken']
+                    self.refresh_token = data['data']['refreshToken']
+                    self.feed_token = data['data']['feedToken']
+                    self.connected = True
+                    logger.info("Successfully connected to Angel One API")
+                    return True
+                else:
+                    logger.error(f"Angel One login failed: {data.get('message', 'Unknown error')}")
+                    return False
+            else:
+                logger.error(f"Angel One API connection failed: {response.status_code}")
+                return False
+                
+        except Exception as e:
+            logger.error(f"Error connecting to Angel One API: {str(e)}")
+            return False
+    
+    async def get_quote(self, ticker: str):
+        """Get real-time quote for a stock"""
+        try:
+            if not self.connected:
+                await self.connect()
+            
+            # Convert ticker format (e.g., TATAMOTORS.NS to NSE:TATAMOTORS-EQ)
+            symbol_token = await self._get_symbol_token(ticker)
+            if not symbol_token:
+                raise Exception(f"Could not find symbol token for {ticker}")
+            
+            headers = {
+                "Authorization": f"Bearer {self.auth_token}",
+                "Content-Type": "application/json",
+                "Accept": "application/json",
+                "X-UserType": "USER",
+                "X-SourceID": "WEB",
+                "X-ClientLocalIP": "127.0.0.1",
+                "X-ClientPublicIP": "127.0.0.1",
+                "X-MACAddress": "00:00:00:00:00:00",
+                "X-PrivateKey": self.api_key
+            }
+            
+            # Get LTP (Last Traded Price)
+            ltp_data = {
+                "exchange": "NSE",
+                "tradingsymbol": ticker.replace(".NS", "-EQ"),
+                "symboltoken": symbol_token
+            }
+            
+            response = self.session.post(
+                f"{self.base_url}/rest/secure/angelbroking/order/v1/getLTP",
+                headers=headers,
+                json=ltp_data
+            )
+            
+            if response.status_code == 200:
+                data = response.json()
+                if data.get('status'):
+                    quote_data = data['data']
+                    return {
+                        "ticker": ticker,
+                        "price": float(quote_data.get('ltp', 0)),
+                        "change": float(quote_data.get('change', 0)),
+                        "change_percent": float(quote_data.get('pChange', 0)),
+                        "volume": int(quote_data.get('volume', 0)),
+                        "timestamp": datetime.now().isoformat(),
+                        "bid": float(quote_data.get('bid', 0)),
+                        "ask": float(quote_data.get('ask', 0)),
+                        "high": float(quote_data.get('high', 0)),
+                        "low": float(quote_data.get('low', 0)),
+                        "open": float(quote_data.get('open', 0)),
+                    }
+                else:
+                    logger.error(f"Angel One quote fetch failed: {data.get('message', 'Unknown error')}")
+                    raise Exception(f"Failed to fetch quote: {data.get('message', 'Unknown error')}")
+            else:
+                logger.error(f"Angel One quote API failed: {response.status_code}")
+                raise Exception(f"API request failed: {response.status_code}")
+                
+        except Exception as e:
+            logger.error(f"Error fetching quote for {ticker}: {str(e)}")
+            # Fallback to Yahoo Finance for development
+            return await self._fallback_yahoo_quote(ticker)
+    
+    async def _get_symbol_token(self, ticker: str) -> Optional[str]:
+        """Get symbol token for a ticker (simplified implementation)"""
+        # This is a simplified mapping - in production, you'd fetch from Angel One's instrument list
+        symbol_mapping = {
+            "TATAMOTORS.NS": "884",
+            "RELIANCE.NS": "2885",
+            "INFY.NS": "1594",
+            "TCS.NS": "11536",
+            "HDFCBANK.NS": "1333",
+            "ICICIBANK.NS": "4963",
+            "SBIN.NS": "3045",
+            "WIPRO.NS": "3787"
+        }
+        return symbol_mapping.get(ticker)
+    
+    async def _fallback_yahoo_quote(self, ticker: str):
+        """Fallback to Yahoo Finance if Angel One fails"""
+        try:
+            stock = yf.Ticker(ticker)
+            info = stock.info
+            hist = stock.history(period="1d")
+            
+            if not hist.empty:
+                latest = hist.iloc[-1]
+                current_price = float(latest['Close'])
+                open_price = float(latest['Open'])
+                
+                return {
+                    "ticker": ticker,
+                    "price": current_price,
+                    "change": current_price - open_price,
+                    "change_percent": ((current_price - open_price) / open_price) * 100,
+                    "volume": int(latest['Volume']),
+                    "timestamp": datetime.now().isoformat(),
+                    "bid": current_price * 0.999,
+                    "ask": current_price * 1.001,
+                    "high": float(latest['High']),
+                    "low": float(latest['Low']),
+                    "open": open_price,
+                }
+        except Exception as e:
+            logger.error(f"Yahoo Finance fallback failed for {ticker}: {str(e)}")
+            raise Exception(f"Both Angel One and Yahoo Finance failed for {ticker}")
+
+# Placeholder for Angel One API client (for backward compatibility during development)
 class MockAngelOneClient:
     """Mock implementation of Angel One API client for development"""
     
@@ -47,8 +227,17 @@ class MockAngelOneClient:
         }
 
 # Initialize clients
-# angel_one_client = AngelOneClient()  # This would be the actual client
-angel_one_client = MockAngelOneClient()  # Using mock for now
+# Try to use real Angel One client if credentials are available
+if ANGEL_ONE_API_KEY and ANGEL_ONE_CLIENT_ID and ANGEL_ONE_PASSWORD:
+    angel_one_client = AngelOneClient(
+        api_key=ANGEL_ONE_API_KEY,
+        client_id=ANGEL_ONE_CLIENT_ID,
+        password=ANGEL_ONE_PASSWORD
+    )
+    logger.info("Initialized real Angel One API client")
+else:
+    angel_one_client = MockAngelOneClient()  # Using mock for development
+    logger.info("Using mock Angel One API client - set environment variables for real API")
 
 async def fetch_historical_data(
     ticker: str,
