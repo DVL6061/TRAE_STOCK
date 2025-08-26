@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
+import useWebSocket from 'react-use-websocket';
 import {
   ChartBarIcon,
   TrendingUpIcon,
@@ -40,80 +41,54 @@ const Dashboard = () => {
   const [loading, setLoading] = useState(true);
   const [selectedTimeframe, setSelectedTimeframe] = useState('1D');
 
-  // Mock data - In real app, this would come from WebSocket/API
+  // WebSocket connection
+  const { lastMessage, readyState } = useWebSocket('ws://localhost:8000/ws/market', {
+    onOpen: () => console.log('WebSocket Connected'),
+    onClose: () => console.log('WebSocket Disconnected'),
+    onError: (error) => console.error('WebSocket Error:', error),
+    shouldReconnect: (closeEvent) => true,
+    reconnectInterval: 3000
+  });
+
+  // Handle real-time updates
+  useEffect(() => {
+    if (lastMessage !== null) {
+      const data = JSON.parse(lastMessage.data);
+      
+      if (data.type === 'market_update') {
+        setMarketData(data.payload);
+      } else if (data.type === 'prediction_update') {
+        setPredictions(data.payload);
+      }
+    }
+  }, [lastMessage]);
+
+  // Initial data fetch
   useEffect(() => {
     const fetchDashboardData = async () => {
-      setLoading(true);
-      
-      // Simulate API delay
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      // Mock market data
-      setMarketData({
-        nifty: {
-          value: 19845.65,
-          change: 125.30,
-          changePercent: 0.63,
-          volume: '2.1B'
-        },
-        sensex: {
-          value: 66598.91,
-          change: 421.15,
-          changePercent: 0.64,
-          volume: '1.8B'
-        },
-        bankNifty: {
-          value: 44521.80,
-          change: -89.25,
-          changePercent: -0.20,
-          volume: '890M'
-        }
-      });
-      
-      // Mock portfolio data
-      setPortfolioData({
-        totalValue: 485000,
-        dayChange: 12500,
-        dayChangePercent: 2.64,
-        totalReturn: 85000,
-        totalReturnPercent: 21.25,
-        holdings: [
-          { symbol: 'RELIANCE', quantity: 50, avgPrice: 2450, currentPrice: 2580, value: 129000 },
-          { symbol: 'TCS', quantity: 30, avgPrice: 3200, currentPrice: 3450, value: 103500 },
-          { symbol: 'INFY', quantity: 40, avgPrice: 1450, currentPrice: 1520, value: 60800 },
-          { symbol: 'HDFC', quantity: 25, avgPrice: 2800, currentPrice: 2950, value: 73750 },
-          { symbol: 'ICICIBANK', quantity: 60, avgPrice: 850, currentPrice: 920, value: 55200 }
-        ]
-      });
-      
-      // Mock AI predictions
-      setPredictions({
-        xgboost: {
-          signal: 'BUY',
-          confidence: 0.78,
-          targetPrice: 20100,
-          timeframe: '1W'
-        },
-        informer: {
-          signal: 'HOLD',
-          confidence: 0.65,
-          targetPrice: 19950,
-          timeframe: '1M'
-        },
-        dqn: {
-          signal: 'BUY',
-          confidence: 0.82,
-          targetPrice: 20250,
-          timeframe: '2W'
-        },
-        sentiment: {
-          score: 0.72,
-          label: 'POSITIVE',
-          newsCount: 45
-        }
-      });
-      
-      setLoading(false);
+      try {
+        setLoading(true);
+        
+        // Fetch initial market data
+        const marketResponse = await fetch('http://localhost:8000/api/market/current');
+        const marketData = await marketResponse.json();
+        setMarketData(marketData);
+
+        // Fetch portfolio data
+        const portfolioResponse = await fetch('http://localhost:8000/api/portfolio/summary');
+        const portfolioData = await portfolioResponse.json();
+        setPortfolioData(portfolioData);
+
+        // Fetch AI predictions
+        const predictionsResponse = await fetch('http://localhost:8000/api/predictions/latest');
+        const predictionsData = await predictionsResponse.json();
+        setPredictions(predictionsData);
+
+      } catch (error) {
+        console.error('Error fetching dashboard data:', error);
+      } finally {
+        setLoading(false);
+      }
     };
     
     fetchDashboardData();
