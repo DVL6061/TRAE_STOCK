@@ -41,8 +41,8 @@ class BacktestRequest(BaseModel):
 async def predict_price(request: PredictionRequest):
     """Generate price prediction for a stock"""
     try:
-        # This would call the actual implementation in core.prediction_engine
-        prediction = await generate_price_prediction(
+        # Call synchronous prediction engine functions
+        prediction = generate_price_prediction(
             ticker=request.ticker,
             prediction_window=request.prediction_window,
             include_news_sentiment=request.include_news_sentiment,
@@ -51,7 +51,7 @@ async def predict_price(request: PredictionRequest):
         
         # Add explanation if requested
         if request.include_explanation:
-            explanation = await get_prediction_explanation(
+            explanation = get_prediction_explanation(
                 ticker=request.ticker,
                 prediction=prediction,
                 prediction_window=request.prediction_window
@@ -67,8 +67,8 @@ async def predict_price(request: PredictionRequest):
 async def get_trading_signal(request: TradingSignalRequest):
     """Generate trading signal (buy/sell/hold) for a stock"""
     try:
-        # This would call the actual implementation in core.prediction_engine
-        signal = await generate_trading_signal(
+        # Call synchronous prediction engine functions
+        signal = generate_trading_signal(
             ticker=request.ticker,
             timeframe=request.timeframe,
             risk_tolerance=request.risk_tolerance
@@ -76,7 +76,7 @@ async def get_trading_signal(request: TradingSignalRequest):
         
         # Add explanation if requested
         if request.include_explanation:
-            explanation = await get_prediction_explanation(
+            explanation = get_prediction_explanation(
                 ticker=request.ticker,
                 prediction=signal,
                 prediction_window=request.timeframe

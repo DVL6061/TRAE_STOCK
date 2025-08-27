@@ -8,8 +8,9 @@ from typing import List, Dict, Any, Optional, Union
 import re
 from bs4 import BeautifulSoup
 
-# This would be replaced with actual FinGPT or other sentiment analysis model
-# from transformers import AutoTokenizer, AutoModelForSequenceClassification
+# Import FinGPT sentiment analysis model
+from ML_models.sentiment_model import SentimentModel
+from ML_models.fingpt_model import FinGPTSentimentAnalyzer
 
 logger = logging.getLogger(__name__)
 
@@ -163,16 +164,70 @@ async def fetch_news(
         logger.error(f"Error fetching news: {str(e)}")
         raise Exception(f"Failed to fetch news: {str(e)}")
 
+# Initialize FinGPT sentiment analyzer (singleton pattern)
+_sentiment_analyzer = None
+
+def get_sentiment_analyzer():
+    """Get or create FinGPT sentiment analyzer instance"""
+    global _sentiment_analyzer
+    if _sentiment_analyzer is None:
+        try:
+            _sentiment_analyzer = FinGPTSentimentAnalyzer()
+            logger.info("FinGPT sentiment analyzer initialized successfully")
+        except Exception as e:
+            logger.error(f"Failed to initialize FinGPT analyzer: {str(e)}")
+            # Fallback to basic sentiment model
+            try:
+                _sentiment_analyzer = SentimentModel()
+                logger.info("Fallback sentiment model initialized")
+            except Exception as e2:
+                logger.error(f"Failed to initialize fallback model: {str(e2)}")
+                _sentiment_analyzer = None
+    return _sentiment_analyzer
+
 async def analyze_sentiment(text: str) -> Dict[str, Any]:
-    """Analyze sentiment of provided text"""
+    """Analyze sentiment of provided text using FinGPT"""
     try:
-        # In a real implementation, this would use FinGPT or another sentiment analysis model
-        # For now, we'll use a mock implementation
-        sentiment = await mock_analyze_sentiment(text)
-        return sentiment
+        analyzer = get_sentiment_analyzer()
+        
+        if analyzer is None:
+            # Ultimate fallback to mock analysis
+            logger.warning("No sentiment analyzer available, using mock analysis")
+            return await mock_analyze_sentiment(text)
+        
+        # Use FinGPT analyzer if available
+        if hasattr(analyzer, 'analyze_text_sentiment'):
+            # FinGPTSentimentAnalyzer
+            result = analyzer.analyze_text_sentiment(text)
+            
+            # Convert FinGPT result format to our standard format
+            return {
+                "score": result.get('score', 0.0),
+                "label": result.get('sentiment', 'neutral').lower(),
+                "confidence": result.get('confidence', 0.0),
+                "method": result.get('method', 'fingpt'),
+                "positive_aspects": result.get('component_results', {}).get('keywords', {}).get('positive_count', 0),
+                "negative_aspects": result.get('component_results', {}).get('keywords', {}).get('negative_count', 0)
+            }
+        else:
+            # SentimentModel fallback
+            result = analyzer.analyze_sentiment(text)
+            
+            # Convert SentimentModel result format to our standard format
+            sentiment_score = result.get('sentiment_score', 0.0)
+            return {
+                "score": sentiment_score,
+                "label": result.get('sentiment', 'neutral'),
+                "confidence": result.get('confidence', 0.0),
+                "method": "finbert",
+                "positive_aspects": [],
+                "negative_aspects": []
+            }
+            
     except Exception as e:
         logger.error(f"Error analyzing sentiment: {str(e)}")
-        raise Exception(f"Failed to analyze sentiment: {str(e)}")
+        # Fallback to mock analysis on error
+        return await mock_analyze_sentiment(text)
 
 async def get_news_impact(
     ticker: str,

@@ -1,7 +1,40 @@
 import os
 from typing import Dict, List
+from pydantic import BaseSettings
+from functools import lru_cache
 
-# Angel One API Configuration
+class Settings(BaseSettings):
+    """Application settings with environment variable support."""
+    
+    # Angel One API Configuration
+    ANGEL_ONE_API_KEY: str = os.getenv('ANGEL_ONE_API_KEY', '')
+    ANGEL_ONE_CLIENT_ID: str = os.getenv('ANGEL_ONE_CLIENT_ID', '')
+    ANGEL_ONE_PASSWORD: str = os.getenv('ANGEL_ONE_PASSWORD', '')
+    
+    # News API Configuration
+    NEWSAPI_KEY: str = os.getenv('NEWSAPI_KEY', '')
+    ALPHAVANTAGE_KEY: str = os.getenv('ALPHAVANTAGE_KEY', '')
+    
+    # Database Configuration
+    DATABASE_URL: str = os.getenv('DATABASE_URL', 'sqlite:///./stock_prediction.db')
+    
+    # Redis Configuration (for caching)
+    REDIS_URL: str = os.getenv('REDIS_URL', 'redis://localhost:6379')
+    
+    # Application Configuration
+    DEBUG: bool = os.getenv('DEBUG', 'False').lower() == 'true'
+    LOG_LEVEL: str = os.getenv('LOG_LEVEL', 'INFO')
+    
+    class Config:
+        env_file = ".env"
+        case_sensitive = True
+
+@lru_cache()
+def get_settings() -> Settings:
+    """Get cached settings instance."""
+    return Settings()
+
+# Legacy configuration for backward compatibility
 ANGEL_ONE_API_KEY = os.getenv('ANGEL_ONE_API_KEY')
 ANGEL_ONE_CLIENT_ID = os.getenv('ANGEL_ONE_CLIENT_ID')
 ANGEL_ONE_PASSWORD = os.getenv('ANGEL_ONE_PASSWORD')

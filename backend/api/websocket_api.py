@@ -15,9 +15,9 @@ from contextlib import asynccontextmanager
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 # Import our services
-from services.websocket_service import WebSocketDataStreamer, MessageType
-from services.prediction_service import PredictionService
-from data.angel_one_client import AngelOneClient
+from app.services.websocket_service import WebSocketDataStreamer, MessageType
+from app.services.prediction_service import PredictionService
+from app.data.angel_one_client import AngelOneClient
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -292,7 +292,7 @@ async def handle_fastapi_websocket(websocket: WebSocket, service: WebSocketDataS
         service: WebSocket data streaming service
     """
     import uuid
-    from services.websocket_service import ClientSubscription
+    from app.services.websocket_service import ClientSubscription
     
     client_id = str(uuid.uuid4())
     logger.info(f"New FastAPI WebSocket client connected: {client_id}")

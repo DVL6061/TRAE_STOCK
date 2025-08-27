@@ -20,6 +20,7 @@ from app.models.news import (
 )
 from app.models.prediction import SentimentAnalysis
 from backend.ML_models.sentiment_model import SentimentModel
+from core.news_processor import analyze_sentiment, fetch_news, get_news_impact
 from app.config import NEWS_SOURCES
 
 logger = logging.getLogger(__name__)
@@ -120,7 +121,7 @@ class NewsService:
         limit: int = 50,
         include_sentiment: bool = True
     ) -> NewsSearchResponse:
-        """Search for financial news with advanced filtering."""
+        """Search for financial news with advanced filtering using core news processor."""
         try:
             # Set default date range if not provided
             if not end_date:
@@ -128,67 +129,57 @@ class NewsService:
             if not start_date:
                 start_date = end_date - timedelta(days=7)
             
-            # Use all sources if none specified
-            if not sources:
-                sources = list(self.sources.keys())
-            
-            # Build search terms
-            search_terms = []
+            # Build search query
+            query_parts = []
             if ticker:
-                # Add variations of ticker
-                search_terms.extend([
-                    ticker,
-                    ticker.replace('.NS', ''),
-                    ticker.replace('.BO', ''),
-                    ticker.replace('_', ' ')
-                ])
+                query_parts.append(ticker)
             if keywords:
-                search_terms.extend(keywords)
+                query_parts.extend(keywords)
             
-            # Fetch news from all sources
-            all_articles = []
-            with ThreadPoolExecutor(max_workers=len(sources)) as executor:
-                futures = {
-                    executor.submit(
-                        self._fetch_from_source, 
-                        source, 
-                        search_terms, 
-                        start_date, 
-                        end_date, 
-                        limit // len(sources)
-                    ): source for source in sources
-                }
-                
-                for future in as_completed(futures, timeout=60):
-                    try:
-                        articles = future.result()
-                        all_articles.extend(articles)
-                    except Exception as e:
-                        source = futures[future]
-                        logger.error(f"Error fetching from {source}: {str(e)}")
+            query = " ".join(query_parts) if query_parts else "stock market"
             
-            # Remove duplicates based on title similarity
-            unique_articles = self._remove_duplicates(all_articles)
+            # Use core news processor for fetching news
+            news_data = await fetch_news(
+                query=query,
+                sources=[source.value for source in (sources or list(self.sources.keys()))],
+                start_date=start_date,
+                end_date=end_date,
+                limit=limit
+            )
             
-            # Sort by date (newest first)
-            unique_articles.sort(key=lambda x: x.published_date, reverse=True)
-            
-            # Limit results
-            unique_articles = unique_articles[:limit]
-            
-            # Add sentiment analysis if requested
-            if include_sentiment:
-                unique_articles = await self._add_sentiment_analysis(unique_articles)
+            # Convert to NewsArticle objects
+            articles = []
+            for item in news_data:
+                try:
+                    article = NewsArticle(
+                        title=item.get('title', ''),
+                        content=item.get('content', ''),
+                        url=item.get('url', ''),
+                        source=NewsSource.MONEYCONTROL,  # Default source
+                        published_date=datetime.fromisoformat(item.get('published_date', datetime.now().isoformat())),
+                        category=NewsCategory.MARKET_NEWS,
+                        keywords=item.get('keywords', [])
+                    )
+                    
+                    # Add sentiment if requested
+                    if include_sentiment:
+                        article.sentiment_score = item.get('sentiment_score', 0.0)
+                        article.sentiment_label = item.get('sentiment_label', 'neutral')
+                    
+                    articles.append(article)
+                except Exception as e:
+                    logger.debug(f"Error converting news item to NewsArticle: {str(e)}")
+                    continue
             
             return NewsSearchResponse(
-                articles=unique_articles,
-                total_count=len(unique_articles),
-                search_terms=search_terms,
+                articles=articles,
+                total_count=len(articles),
+                search_terms=query_parts,
                 date_range={
                     'start_date': start_date,
                     'end_date': end_date
                 },
-                sources_used=[s.value for s in sources]
+                sources_used=[source.value for source in (sources or list(self.sources.keys()))]
             )
             
         except Exception as e:
@@ -196,13 +187,13 @@ class NewsService:
             return NewsSearchResponse(
                 articles=[],
                 total_count=0,
-                search_terms=search_terms if 'search_terms' in locals() else [],
+                search_terms=[],
                 date_range={'start_date': start_date, 'end_date': end_date},
                 sources_used=[]
             )
     
     async def get_sentiment_score(self, ticker: Optional[str] = None) -> float:
-        """Get aggregated sentiment score from financial news."""
+        """Get aggregated sentiment score from financial news using core news processor."""
         try:
             cache_key = ticker or 'general'
             
@@ -212,45 +203,17 @@ class NewsService:
                 datetime.now() - self._last_update[cache_key] < self._update_interval):
                 return self._sentiment_cache[cache_key]
             
-            # Fetch recent news
-            news_response = await self.search_news(
-                ticker=ticker,
-                start_date=datetime.now() - timedelta(days=3),
-                limit=20,
-                include_sentiment=True
-            )
+            # Use core news processor for news impact analysis
+            impact_data = await get_news_impact(ticker or "market", days=3)
             
-            if not news_response.articles:
-                return 0.0
-            
-            # Calculate weighted sentiment score
-            sentiment_scores = []
-            for article in news_response.articles:
-                if hasattr(article, 'sentiment') and article.sentiment:
-                    # Weight by recency (more recent = higher weight)
-                    hours_old = (datetime.now() - article.published_date).total_seconds() / 3600
-                    weight = max(0.1, 1.0 - (hours_old / 72))  # Decay over 3 days
-                    
-                    sentiment_scores.append({
-                        'score': article.sentiment.sentiment_score,
-                        'weight': weight,
-                        'confidence': article.sentiment.confidence
-                    })
-            
-            if not sentiment_scores:
-                return 0.0
-            
-            # Calculate weighted average
-            total_weight = sum(s['weight'] * s['confidence'] for s in sentiment_scores)
-            weighted_sum = sum(s['score'] * s['weight'] * s['confidence'] for s in sentiment_scores)
-            
-            weighted_sentiment = weighted_sum / total_weight if total_weight > 0 else 0.0
+            # Extract sentiment score from impact analysis
+            sentiment_score = impact_data.get('overall_sentiment', 0.0)
             
             # Update cache
-            self._sentiment_cache[cache_key] = weighted_sentiment
+            self._sentiment_cache[cache_key] = sentiment_score
             self._last_update[cache_key] = datetime.now()
             
-            return weighted_sentiment
+            return sentiment_score
             
         except Exception as e:
             logger.error(f"Error calculating sentiment score: {str(e)}")
@@ -260,91 +223,204 @@ class NewsService:
                 return self._sentiment_cache[cache_key]
             return 0.0  # Neutral sentiment as fallback
     
-    async def _fetch_news(self) -> List[Dict]:
-        """Fetch news from multiple sources"""
-        async with aiohttp.ClientSession() as session:
-            tasks = []
-            for source in self.sources:
-                tasks.append(self._fetch_source(session, source))
-            
-            results = await asyncio.gather(*tasks, return_exceptions=True)
-            
-            # Filter out errors and combine results
-            news_articles = []
-            for result in results:
-                if isinstance(result, list):
-                    news_articles.extend(result)
-            
-            return news_articles
-    
-    async def _fetch_source(self, session: aiohttp.ClientSession, source: Dict) -> List[Dict]:
-        """Fetch news from a single source"""
+    def _fetch_from_source(
+        self, 
+        source: NewsSource, 
+        search_terms: List[str], 
+        start_date: datetime, 
+        end_date: datetime, 
+        limit: int
+    ) -> List[NewsArticle]:
+        """Fetch news from a specific source with rate limiting and parsing."""
         try:
-            async with session.get(source['url']) as response:
-                html = await response.text()
-                soup = BeautifulSoup(html, 'html.parser')
-                
-                articles = []
-                for article in soup.select(source['article_selector']):
-                    title = article.select_one(source['title_selector']).text.strip()
-                    link = article.select_one(source['link_selector'])['href']
-                    timestamp = self._parse_timestamp(
-                        article.select_one(source['timestamp_selector']).text.strip(),
-                        source['timestamp_format']
-                    )
-                    
-                    # Get article content if needed
-                    content = await self._fetch_article_content(session, link, source)
-                    
-                    articles.append({
-                        'title': title,
-                        'content': content,
-                        'link': link,
-                        'timestamp': timestamp,
-                        'source': source['name']
-                    })
-                
+            articles = []
+            source_config = self.sources.get(source)
+            if not source_config:
                 return articles
-                
+            
+            # Rate limiting
+            time.sleep(self._request_delays.get(source, 1))
+            
+            for term in search_terms[:3]:  # Limit search terms to avoid too many requests
+                try:
+                    # Format search URL
+                    search_url = source_config['search_url'].format(quote(term))
+                    
+                    # Make request
+                    response = self.session.get(
+                        search_url,
+                        headers=source_config['headers'],
+                        timeout=10
+                    )
+                    response.raise_for_status()
+                    
+                    # Parse HTML
+                    soup = BeautifulSoup(response.content, 'html.parser')
+                    
+                    # Extract articles
+                    article_elements = soup.select(source_config['selectors']['articles'])[:limit]
+                    
+                    for element in article_elements:
+                        try:
+                            # Extract title
+                            title_elem = element.select_one(source_config['selectors']['title'])
+                            if not title_elem:
+                                continue
+                            title = title_elem.get_text(strip=True)
+                            
+                            # Extract link
+                            link_elem = element.select_one(source_config['selectors']['link'])
+                            if not link_elem:
+                                continue
+                            link = link_elem.get('href', '')
+                            if link.startswith('/'):
+                                link = urljoin(source_config['base_url'], link)
+                            
+                            # Extract date
+                            date_elem = element.select_one(source_config['selectors']['date'])
+                            published_date = self._parse_date(date_elem.get_text(strip=True) if date_elem else '')
+                            
+                            # Filter by date range
+                            if published_date < start_date or published_date > end_date:
+                                continue
+                            
+                            # Create NewsArticle object
+                            article = NewsArticle(
+                                title=title,
+                                content='',  # Will be fetched separately if needed
+                                url=link,
+                                source=source,
+                                published_date=published_date,
+                                category=NewsCategory.MARKET_NEWS,
+                                keywords=[term]
+                            )
+                            
+                            articles.append(article)
+                            
+                        except Exception as e:
+                            logger.debug(f"Error parsing article element: {str(e)}")
+                            continue
+                    
+                except Exception as e:
+                    logger.error(f"Error fetching from {source.value} with term '{term}': {str(e)}")
+                    continue
+            
+            return articles[:limit]
+            
         except Exception as e:
-            print(f"Error fetching from {source['name']}: {str(e)}")
+            logger.error(f"Error in _fetch_from_source for {source.value}: {str(e)}")
             return []
     
-    async def _fetch_article_content(self, session: aiohttp.ClientSession,
-                                   url: str, source: Dict) -> str:
-        """Fetch and extract content from an article"""
-        try:
-            async with session.get(url) as response:
-                html = await response.text()
-                soup = BeautifulSoup(html, 'html.parser')
-                
-                content_elements = soup.select(source['content_selector'])
-                content = ' '.join(elem.text.strip() for elem in content_elements)
-                
-                return content
-                
-        except Exception as e:
-            print(f"Error fetching article content: {str(e)}")
-            return ""
+    def _parse_date(self, date_str: str) -> datetime:
+        """Parse date string from various formats used by news sources."""
+        if not date_str:
+            return datetime.now()
+        
+        # Common date formats used by Indian financial news sites
+        date_formats = [
+            '%Y-%m-%d %H:%M:%S',
+            '%Y-%m-%d',
+            '%d-%m-%Y %H:%M:%S',
+            '%d-%m-%Y',
+            '%d %b %Y %H:%M',
+            '%d %B %Y %H:%M',
+            '%d %b %Y',
+            '%d %B %Y',
+            '%b %d, %Y %H:%M',
+            '%B %d, %Y %H:%M',
+            '%b %d, %Y',
+            '%B %d, %Y'
+        ]
+        
+        # Clean the date string
+        date_str = re.sub(r'\s+', ' ', date_str.strip())
+        date_str = re.sub(r'[^\w\s:,-]', '', date_str)
+        
+        for fmt in date_formats:
+            try:
+                return datetime.strptime(date_str, fmt)
+            except ValueError:
+                continue
+        
+        # Try to extract relative dates (e.g., "2 hours ago", "1 day ago")
+        relative_patterns = [
+            (r'(\d+)\s*hour[s]?\s*ago', lambda m: datetime.now() - timedelta(hours=int(m.group(1)))),
+            (r'(\d+)\s*day[s]?\s*ago', lambda m: datetime.now() - timedelta(days=int(m.group(1)))),
+            (r'(\d+)\s*minute[s]?\s*ago', lambda m: datetime.now() - timedelta(minutes=int(m.group(1)))),
+            (r'yesterday', lambda m: datetime.now() - timedelta(days=1)),
+            (r'today', lambda m: datetime.now())
+        ]
+        
+        for pattern, func in relative_patterns:
+            match = re.search(pattern, date_str.lower())
+            if match:
+                return func(match)
+        
+        # Default to current time if parsing fails
+        logger.warning(f"Could not parse date: {date_str}")
+        return datetime.now()
     
-    async def _analyze_sentiment(self, articles: List[Dict]) -> List[Dict]:
-        """Analyze sentiment of news articles using FinGPT"""
-        sentiment_scores = []
+    def _remove_duplicates(self, articles: List[NewsArticle]) -> List[NewsArticle]:
+        """Remove duplicate articles based on title similarity."""
+        if not articles:
+            return articles
+        
+        unique_articles = []
+        seen_titles = set()
         
         for article in articles:
-            # Combine title and content for analysis
-            text = f"{article['title']}. {article['content']}"
+            # Normalize title for comparison
+            normalized_title = re.sub(r'[^\w\s]', '', article.title.lower())
+            normalized_title = re.sub(r'\s+', ' ', normalized_title).strip()
             
-            # Get sentiment prediction
-            sentiment = self.sentiment_analyzer(text)[0]
+            # Check for similarity with existing titles
+            is_duplicate = False
+            for seen_title in seen_titles:
+                # Simple similarity check - if 80% of words match
+                title_words = set(normalized_title.split())
+                seen_words = set(seen_title.split())
+                
+                if len(title_words) > 0 and len(seen_words) > 0:
+                    intersection = len(title_words.intersection(seen_words))
+                    union = len(title_words.union(seen_words))
+                    similarity = intersection / union
+                    
+                    if similarity > 0.8:
+                        is_duplicate = True
+                        break
             
-            sentiment_scores.append({
-                'score': self._normalize_sentiment_score(sentiment),
-                'timestamp': article['timestamp'],
-                'importance': self._calculate_importance(article)
-            })
+            if not is_duplicate:
+                unique_articles.append(article)
+                seen_titles.add(normalized_title)
         
-        return sentiment_scores
+        return unique_articles
+    
+    async def _add_sentiment_analysis(self, articles: List[NewsArticle]) -> List[NewsArticle]:
+        """Add sentiment analysis to news articles using core news processor"""
+        analyzed_articles = []
+        
+        for article in articles:
+            try:
+                # Combine title and content for analysis
+                text = f"{article.title} {article.content}"
+                
+                # Use core news processor for sentiment analysis
+                sentiment_result = analyze_sentiment(text)
+                
+                # Add sentiment data to article
+                article.sentiment_score = sentiment_result.get('compound', 0.0)
+                article.sentiment_label = sentiment_result.get('label', 'neutral')
+                
+                analyzed_articles.append(article)
+                
+            except Exception as e:
+                logger.error(f"Error analyzing sentiment: {str(e)}")
+                # Add neutral sentiment as fallback
+                article.sentiment_score = 0.0
+                article.sentiment_label = 'neutral'
+                analyzed_articles.append(article)
+        
+        return analyzed_articles
     
     def _normalize_sentiment_score(self, sentiment: Dict) -> float:
         """Normalize sentiment score to range [-1, 1]"""
