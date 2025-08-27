@@ -5,20 +5,20 @@ import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
 // Layout components
-import Header from './components/layout/Header';
-import Sidebar from './components/layout/Sidebar';
-import Footer from './components/layout/Footer';
+import Header from '../frontend/src/components/layout/Header';
+import Sidebar from '../frontend/src/components/layout/Sidebar';
+import Footer from '../frontend/src/components/layout/Footer';
 
 // Page components
-import Dashboard from './pages/Dashboard';
-import StockDetail from './pages/StockDetail';
-import PredictionPage from './pages/PredictionPage';
-import NewsPage from './pages/NewsPage';
-import SettingsPage from './pages/SettingsPage';
-import NotFoundPage from './pages/NotFoundPage';
+import Dashboard from '../frontend/src/pages/Dashboard';
+import StockDetail from '../frontend/src/pages/StockDetail';
+import PredictionPage from '../frontend/src/pages/PredictionPage';
+import NewsPage from '../frontend/src/pages/NewsPage';
+import SettingsPage from '../frontend/src/pages/SettingsPage';
+import NotFoundPage from '../frontend/src/pages/NotFoundPage';
 
 // Context
-import { ThemeProvider } from './contexts/ThemeContext';
+import { ThemeProvider } from '../frontend/src/contexts/ThemeContext';
 
 function App() {
   const { t } = useTranslation();

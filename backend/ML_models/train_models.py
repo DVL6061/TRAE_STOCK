@@ -10,7 +10,7 @@ from typing import Dict, List, Tuple, Union, Optional
 # Add the project root to the Python path
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..')))
 
-from backend.models.model_factory import model_factory
+from backend.ML_models.model_factory import model_factory
 from backend.core.data_fetcher import fetch_historical_data, calculate_technical_indicators
 from backend.core.news_processor import fetch_news, analyze_news_sentiment
 from backend.utils.config import TECHNICAL_INDICATORS, PREDICTION_WINDOWS

@@ -2,10 +2,10 @@ import os
 import logging
 from typing import Dict, List, Union, Optional, Any
 
-from backend.models.xgboost_model import XGBoostModel
-from backend.models.informer_model import InformerWrapper
-from backend.models.dqn_model import DQNAgent
-from backend.models.sentiment_model import SentimentModel
+from backend.ML_models.xgboost_model import XGBoostModel
+from backend.ML_models.informer_model import InformerWrapper
+from backend.ML_models.dqn_model import DQNAgent
+from backend.ML_models.sentiment_model import SentimentModel
 
 logger = logging.getLogger(__name__)
 

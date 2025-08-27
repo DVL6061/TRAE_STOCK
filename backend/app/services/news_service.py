@@ -19,7 +19,7 @@ from app.models.news import (
     NewsSearchRequest, NewsSearchResponse
 )
 from app.models.prediction import SentimentAnalysis
-from backend.models.sentiment_model import SentimentModel
+from backend.ML_models.sentiment_model import SentimentModel
 from app.config import NEWS_SOURCES
 
 logger = logging.getLogger(__name__)
