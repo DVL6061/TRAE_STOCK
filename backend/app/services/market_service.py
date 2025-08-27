@@ -497,6 +497,148 @@ class MarketService:
             return f"{symbol}.NS"
         return symbol
     
+    def get_current_price(self, ticker: str) -> Optional[Dict[str, Any]]:
+        """Get current price data for a ticker."""
+        try:
+            # First try Angel One API
+            if self.smart_api:
+                self._refresh_session()
+                
+                # Get symbol token (this would need proper symbol mapping)
+                symbol_token = self._get_symbol_token(ticker)
+                
+                if symbol_token:
+                    ltp_data = self.smart_api.ltpData(
+                        exchange='NSE',
+                        tradingsymbol=ticker,
+                        symboltoken=symbol_token
+                    )
+                    
+                    if ltp_data and ltp_data.get('status'):
+                        data = ltp_data['data']
+                        return {
+                            'ticker': ticker,
+                            'ltp': float(data.get('ltp', 0)),
+                            'open': float(data.get('open', 0)),
+                            'high': float(data.get('high', 0)),
+                            'low': float(data.get('low', 0)),
+                            'close': float(data.get('close', 0)),
+                            'volume': int(data.get('volume', 0)),
+                            'change': float(data.get('netChng', 0)),
+                            'change_percent': float(data.get('prcntChng', 0)),
+                            'timestamp': datetime.now().isoformat()
+                        }
+            
+            # Fallback to yfinance
+            yf_symbol = self._convert_to_yf_symbol(ticker)
+            ticker_obj = yf.Ticker(yf_symbol)
+            hist = ticker_obj.history(period='1d', interval='1m')
+            
+            if not hist.empty:
+                latest = hist.iloc[-1]
+                open_price = float(hist.iloc[0]['Open'])
+                current_price = float(latest['Close'])
+                
+                return {
+                    'ticker': ticker,
+                    'ltp': current_price,
+                    'open': open_price,
+                    'high': float(hist['High'].max()),
+                    'low': float(hist['Low'].min()),
+                    'close': current_price,
+                    'volume': int(hist['Volume'].sum()),
+                    'change': current_price - open_price,
+                    'change_percent': ((current_price - open_price) / open_price) * 100 if open_price > 0 else 0,
+                    'timestamp': datetime.now().isoformat()
+                }
+            
+            return None
+            
+        except Exception as e:
+            logger.error(f"Error fetching current price for {ticker}: {str(e)}")
+            return None
+    
+    def get_historical_data(self, ticker: str, period: str = '1mo') -> Optional[List[Dict[str, Any]]]:
+        """Get historical price data for a ticker."""
+        try:
+            # Convert symbol to yfinance format
+            yf_symbol = self._convert_to_yf_symbol(ticker)
+            ticker_obj = yf.Ticker(yf_symbol)
+            
+            # Get historical data
+            hist = ticker_obj.history(period=period, interval='1d')
+            
+            if hist.empty:
+                return None
+            
+            # Convert to list of dictionaries
+            historical_data = []
+            for timestamp, row in hist.iterrows():
+                historical_data.append({
+                    'timestamp': timestamp.isoformat(),
+                    'open': float(row['Open']),
+                    'high': float(row['High']),
+                    'low': float(row['Low']),
+                    'close': float(row['Close']),
+                    'volume': int(row['Volume'])
+                })
+            
+            return historical_data
+            
+        except Exception as e:
+            logger.error(f"Error fetching historical data for {ticker}: {str(e)}")
+            return None
+    
+    def calculate_technical_indicators(self, historical_data: List[Dict[str, Any]]) -> Optional[Dict[str, Any]]:
+        """Calculate technical indicators from historical data."""
+        try:
+            if not historical_data or len(historical_data) < 20:
+                return None
+            
+            # Extract price data
+            closes = [float(data['close']) for data in historical_data]
+            highs = [float(data['high']) for data in historical_data]
+            lows = [float(data['low']) for data in historical_data]
+            volumes = [int(data['volume']) for data in historical_data]
+            
+            # Calculate indicators using existing method
+            data_points = []
+            for data in historical_data:
+                data_points.append(MarketDataPoint(
+                    timestamp=datetime.fromisoformat(data['timestamp'].replace('Z', '+00:00')),
+                    open=float(data['open']),
+                    high=float(data['high']),
+                    low=float(data['low']),
+                    close=float(data['close']),
+                    volume=int(data['volume'])
+                ))
+            
+            indicators = self._calculate_technical_indicators(data_points)
+            
+            # Convert to dictionary format
+            return {
+                'rsi': indicators.rsi,
+                'macd': {
+                    'line': indicators.macd_line,
+                    'signal': indicators.macd_signal,
+                    'histogram': indicators.macd_histogram
+                },
+                'bollinger_bands': {
+                    'upper': indicators.bb_upper,
+                    'middle': indicators.bb_middle,
+                    'lower': indicators.bb_lower
+                },
+                'sma_20': indicators.sma_20,
+                'sma_50': indicators.sma_50,
+                'ema_12': indicators.ema_12,
+                'ema_26': indicators.ema_26,
+                'volume_sma': sum(volumes[-20:]) / 20 if len(volumes) >= 20 else None
+            }
+            
+        except Exception as e:
+            logger.error(f"Error calculating technical indicators: {str(e)}")
+            return None
+
     async def get_portfolio_summary(self) -> PortfolioSummary:
         """Get portfolio summary from Angel One API"""
         if self._portfolio_cache:

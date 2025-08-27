@@ -6,7 +6,7 @@ from datetime import datetime, timedelta
 import json
 
 # Import prediction models and utilities
-from core.prediction_engine import (
+from backend.core.prediction_engine import (
     generate_price_prediction,
     generate_trading_signal,
     get_prediction_explanation

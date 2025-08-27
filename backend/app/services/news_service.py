@@ -20,7 +20,7 @@ from app.models.news import (
 )
 from app.models.prediction import SentimentAnalysis
 from backend.ML_models.sentiment_model import SentimentModel
-from core.news_processor import analyze_sentiment, fetch_news, get_news_impact
+from backend.core.news_processor import analyze_sentiment, fetch_news, get_news_impact
 from app.config import NEWS_SOURCES
 
 logger = logging.getLogger(__name__)
@@ -204,10 +204,12 @@ class NewsService:
                 return self._sentiment_cache[cache_key]
             
             # Use core news processor for news impact analysis
-            impact_data = await get_news_impact(ticker or "market", days=3)
+            end_date = datetime.now().strftime("%Y-%m-%d")
+            start_date = (datetime.now() - timedelta(days=3)).strftime("%Y-%m-%d")
+            impact_data = await get_news_impact(ticker or "NIFTY50", start_date, end_date)
             
             # Extract sentiment score from impact analysis
-            sentiment_score = impact_data.get('overall_sentiment', 0.0)
+            sentiment_score = impact_data.get('average_sentiment_score', 0.0)
             
             # Update cache
             self._sentiment_cache[cache_key] = sentiment_score
@@ -405,10 +407,10 @@ class NewsService:
                 text = f"{article.title} {article.content}"
                 
                 # Use core news processor for sentiment analysis
-                sentiment_result = analyze_sentiment(text)
+                sentiment_result = await analyze_sentiment(text)
                 
                 # Add sentiment data to article
-                article.sentiment_score = sentiment_result.get('compound', 0.0)
+                article.sentiment_score = sentiment_result.get('score', 0.0)
                 article.sentiment_label = sentiment_result.get('label', 'neutral')
                 
                 analyzed_articles.append(article)
@@ -435,12 +437,74 @@ class NewsService:
     
     def _calculate_importance(self, article: Dict) -> float:
         """Calculate importance weight for an article"""
-        # Implement importance calculation based on:
-        # - Source reliability
-        # - Article freshness
-        # - Content length
-        # - Keyword relevance
-        pass
+        try:
+            importance = 1.0  # Base importance
+            
+            # Source reliability weights
+            source_weights = {
+                'moneycontrol': 1.2,
+                'economictimes': 1.1,
+                'mint': 1.0,
+                'cnbc': 0.9,
+                'default': 0.8
+            }
+            
+            source = article.get('source', '').lower()
+            source_weight = source_weights.get(source, source_weights['default'])
+            importance *= source_weight
+            
+            # Article freshness (newer articles are more important)
+            if 'published_date' in article:
+                try:
+                    pub_date = article['published_date']
+                    if isinstance(pub_date, str):
+                        pub_date = datetime.fromisoformat(pub_date.replace('Z', '+00:00'))
+                    
+                    hours_old = (datetime.now() - pub_date).total_seconds() / 3600
+                    
+                    # Decay factor for article age
+                    if hours_old <= 1:
+                        freshness_weight = 1.5  # Very fresh
+                    elif hours_old <= 6:
+                        freshness_weight = 1.2  # Fresh
+                    elif hours_old <= 24:
+                        freshness_weight = 1.0  # Recent
+                    elif hours_old <= 72:
+                        freshness_weight = 0.8  # Somewhat old
+                    else:
+                        freshness_weight = 0.6  # Old
+                    
+                    importance *= freshness_weight
+                except Exception:
+                    pass  # Use default importance if date parsing fails
+            
+            # Content length (longer articles might be more comprehensive)
+            content_length = len(article.get('content', '') + article.get('title', ''))
+            if content_length > 500:
+                importance *= 1.1
+            elif content_length < 100:
+                importance *= 0.9
+            
+            # Keyword relevance (if article contains important financial keywords)
+            important_keywords = [
+                'earnings', 'revenue', 'profit', 'loss', 'merger', 'acquisition',
+                'ipo', 'dividend', 'split', 'buyback', 'results', 'guidance',
+                'outlook', 'forecast', 'upgrade', 'downgrade', 'rating'
+            ]
+            
+            text = (article.get('title', '') + ' ' + article.get('content', '')).lower()
+            keyword_matches = sum(1 for keyword in important_keywords if keyword in text)
+            
+            if keyword_matches >= 3:
+                importance *= 1.3
+            elif keyword_matches >= 1:
+                importance *= 1.1
+            
+            return min(importance, 2.0)  # Cap maximum importance at 2.0
+            
+        except Exception as e:
+            logger.error(f"Error calculating article importance: {str(e)}")
+            return 1.0  # Default importance
     
     def _calculate_weighted_sentiment(self, sentiment_scores: List[Dict]) -> float:
         """Calculate weighted average sentiment score"""

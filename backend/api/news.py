@@ -6,13 +6,13 @@ from datetime import datetime, timedelta
 import asyncio
 
 # Import news fetching and sentiment analysis utilities
-from core.news_processor import (
+from backend.core.news_processor import (
     fetch_news,
     analyze_sentiment,
     get_news_impact
 )
-from data.news_fetcher import ComprehensiveNewsFetcher
-from app.config import get_settings
+from backend.data.news_fetcher import ComprehensiveNewsFetcher
+from backend.app.config import get_settings
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
