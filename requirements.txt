@@ -33,7 +33,8 @@ pyotp>=2.8.0  # For Angel One API authentication
 newsapi-python>=0.2.7
 beautifulsoup4>=4.12.0
 sentencepiece>=0.1.99
-finbert>=0.0.5
+#finbert>=0.0.5
+
 
 # Testing
 pytest>=7.3.0
