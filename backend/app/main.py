@@ -8,7 +8,33 @@ from app.models.market import MarketData, PredictionData
 from app.services.market_service import MarketService
 from app.services.prediction_service import PredictionService
 
+# Import API routers
+from backend.api import news, predictions, stock_data, training
+from backend.api.websocket_api import websocket_endpoint
+from backend.core.training_scheduler import start_training_scheduler
+from backend.core.error_handler import (
+    StockPredictionError,
+    stock_prediction_exception_handler,
+    general_exception_handler,
+    log_info
+)
+
 app = FastAPI(title="Stock Prediction API")
+
+# Add exception handlers
+app.add_exception_handler(StockPredictionError, stock_prediction_exception_handler)
+app.add_exception_handler(Exception, general_exception_handler)
+
+# Startup event to initialize training scheduler
+@app.on_event("startup")
+async def startup_event():
+    """Initialize training scheduler on application startup"""
+    log_info("Starting Stock Prediction API application")
+    try:
+        await start_training_scheduler()
+        log_info("Training scheduler started successfully")
+    except Exception as e:
+        log_info(f"Failed to start training scheduler: {e}", {"error": str(e)})
 
 # Configure CORS
 app.add_middleware(
@@ -18,6 +44,12 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Include API routers
+app.include_router(news.router, prefix="/api/news", tags=["news"])
+app.include_router(predictions.router, prefix="/api/predictions", tags=["predictions"])
+app.include_router(stock_data.router, prefix="/api/stock", tags=["stock_data"])
+app.include_router(training.router, prefix="/api/training", tags=["training"])
 
 # WebSocket connection manager
 class ConnectionManager:

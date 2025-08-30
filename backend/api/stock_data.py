@@ -5,7 +5,7 @@ import logging
 from datetime import datetime, timedelta
 
 # Import data fetching utilities
-from core.data_fetcher import (
+from backend.core.data_fetcher import (
     fetch_historical_data,
     fetch_realtime_data,
     fetch_technical_indicators

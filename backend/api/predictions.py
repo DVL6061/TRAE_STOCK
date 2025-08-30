@@ -11,6 +11,12 @@ from backend.core.prediction_engine import (
     generate_trading_signal,
     get_prediction_explanation
 )
+from backend.core.error_handler import (
+    handle_errors,
+    PredictionError,
+    log_info,
+    create_error_response
+)
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
@@ -38,55 +44,62 @@ class BacktestRequest(BaseModel):
 
 # Endpoints
 @router.post("/price")
+@handle_errors("prediction")
 async def predict_price(request: PredictionRequest):
     """Generate price prediction for a stock"""
-    try:
-        # Call synchronous prediction engine functions
-        prediction = generate_price_prediction(
+    log_info(f"Generating price prediction for {request.ticker}", {
+        "ticker": request.ticker,
+        "prediction_window": request.prediction_window
+    })
+    
+    # Call synchronous prediction engine functions
+    prediction = generate_price_prediction(
+        ticker=request.ticker,
+        prediction_window=request.prediction_window,
+        include_news_sentiment=request.include_news_sentiment,
+        include_technical_indicators=request.include_technical_indicators
+    )
+    
+    # Add explanation if requested
+    if request.include_explanation:
+        explanation = get_prediction_explanation(
             ticker=request.ticker,
-            prediction_window=request.prediction_window,
-            include_news_sentiment=request.include_news_sentiment,
-            include_technical_indicators=request.include_technical_indicators
+            prediction=prediction,
+            prediction_window=request.prediction_window
         )
-        
-        # Add explanation if requested
-        if request.include_explanation:
-            explanation = get_prediction_explanation(
-                ticker=request.ticker,
-                prediction=prediction,
-                prediction_window=request.prediction_window
-            )
-            prediction["explanation"] = explanation
-            
-        return prediction
-    except Exception as e:
-        logger.error(f"Error generating price prediction for {request.ticker}: {str(e)}")
-        raise HTTPException(status_code=500, detail=f"Failed to generate price prediction: {str(e)}")
+        prediction["explanation"] = explanation
+    
+    log_info(f"Successfully generated price prediction for {request.ticker}")
+    return prediction
 
 @router.post("/trading-signal")
+@handle_errors("prediction")
 async def get_trading_signal(request: TradingSignalRequest):
     """Generate trading signal (buy/sell/hold) for a stock"""
-    try:
-        # Call synchronous prediction engine functions
-        signal = generate_trading_signal(
+    log_info(f"Generating trading signal for {request.ticker}", {
+        "ticker": request.ticker,
+        "timeframe": request.timeframe,
+        "risk_tolerance": request.risk_tolerance
+    })
+    
+    # Call synchronous prediction engine functions
+    signal = generate_trading_signal(
+        ticker=request.ticker,
+        timeframe=request.timeframe,
+        risk_tolerance=request.risk_tolerance
+    )
+    
+    # Add explanation if requested
+    if request.include_explanation:
+        explanation = get_prediction_explanation(
             ticker=request.ticker,
-            timeframe=request.timeframe,
-            risk_tolerance=request.risk_tolerance
+            prediction=signal,
+            prediction_window=request.timeframe
         )
-        
-        # Add explanation if requested
-        if request.include_explanation:
-            explanation = get_prediction_explanation(
-                ticker=request.ticker,
-                prediction=signal,
-                prediction_window=request.timeframe
-            )
-            signal["explanation"] = explanation
-            
-        return signal
-    except Exception as e:
-        logger.error(f"Error generating trading signal for {request.ticker}: {str(e)}")
-        raise HTTPException(status_code=500, detail=f"Failed to generate trading signal: {str(e)}")
+        signal["explanation"] = explanation
+    
+    log_info(f"Successfully generated trading signal for {request.ticker}")
+    return signal
 
 @router.post("/backtest")
 async def backtest_strategy(request: BacktestRequest):

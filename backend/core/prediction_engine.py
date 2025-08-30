@@ -7,13 +7,15 @@ from typing import List, Dict, Any, Optional, Union
 import json
 
 # Import data fetching and news processing utilities
-from core.data_fetcher import fetch_historical_data, fetch_technical_indicators
-from core.news_processor import fetch_news, analyze_sentiment
+from backend.core.data_fetcher import fetch_historical_data, fetch_technical_indicators
+from backend.core.news_processor import fetch_news, analyze_sentiment
 
-# This would be replaced with actual ML model imports
-# import xgboost as xgb
-# import torch
-# import shap
+# Import ML models
+from backend.ML_models.xgboost_model import XGBoostModel
+from backend.ML_models.informer_model import InformerModel
+from backend.ML_models.dqn_model import DQNModel
+import xgboost as xgb
+import shap
 
 logger = logging.getLogger(__name__)
 
@@ -385,8 +387,28 @@ async def get_prediction_explanation(
 ) -> Dict[str, Any]:
     """Generate explanation for a prediction using SHAP values"""
     try:
-        # In a real implementation, this would use SHAP values to explain the prediction
-        # For now, we'll generate a mock explanation
+        # Initialize XGBoost model to get SHAP explanations
+        timeframe_map = {
+            "1d": "intraday", "3d": "short_term", "1w": "short_term",
+            "2w": "medium_term", "1m": "medium_term", "3m": "long_term"
+        }
+        timeframe = timeframe_map.get(prediction_window, "medium_term")
+        
+        # Try to get SHAP explanations from XGBoost model
+        shap_explanations = {}
+        try:
+            xgb_model = XGBoostModel(ticker, timeframe)
+            if xgb_model.load_model():
+                # Get recent data for SHAP analysis
+                historical_data = await fetch_historical_data(ticker, period="1mo")
+                if not historical_data.empty:
+                    engineered_data = xgb_model.engineer_features(historical_data)
+                    if len(engineered_data) > 0:
+                        X = engineered_data[xgb_model.feature_columns].values
+                        shap_explanations = xgb_model.get_shap_explanations(X[-1:])  # Latest data point
+        except Exception as e:
+            logger.warning(f"Could not get SHAP explanations: {e}")
+            shap_explanations = {}
         
         # Extract relevant information from the prediction
         if "action" in prediction:
@@ -396,64 +418,80 @@ async def get_prediction_explanation(
             technical_signals = prediction["technical_signals"]
             news_sentiment_score = prediction.get("news_sentiment_score", 0)
             
-            # Generate explanation based on action
-            if action == "buy":
-                main_factors = []
-                if technical_signals["rsi"] < 40:
-                    main_factors.append(f"RSI is relatively low at {technical_signals['rsi']}, indicating potential overselling")
-                if technical_signals["macd"] > technical_signals["macd_signal"]:
-                    main_factors.append("MACD is above signal line, suggesting positive momentum")
-                if technical_signals["momentum_5d"] > 0:
-                    main_factors.append(f"Recent 5-day momentum is positive at {technical_signals['momentum_5d']}%")
-                if news_sentiment_score > 0:
-                    main_factors.append(f"News sentiment is positive with a score of {news_sentiment_score}")
+            # Use SHAP explanations if available, otherwise fall back to technical analysis
+            main_factors = []
+            factor_weights = {}
+            
+            if shap_explanations and "feature_contributions" in shap_explanations:
+                # Use actual SHAP explanations
+                contributions = shap_explanations["feature_contributions"]
+                top_positive = shap_explanations.get("top_positive_features", [])
+                top_negative = shap_explanations.get("top_negative_features", [])
                 
-                explanation = {
-                    "summary": f"The model recommends a BUY action with {confidence*100:.1f}% confidence based on technical indicators and news sentiment.",
-                    "main_factors": main_factors,
-                    "factor_weights": {
-                        "technical_analysis": 0.7,
-                        "news_sentiment": 0.3
-                    }
-                }
-            elif action == "sell":
-                main_factors = []
-                if technical_signals["rsi"] > 60:
-                    main_factors.append(f"RSI is relatively high at {technical_signals['rsi']}, indicating potential overbuying")
-                if technical_signals["macd"] < technical_signals["macd_signal"]:
-                    main_factors.append("MACD is below signal line, suggesting negative momentum")
-                if technical_signals["momentum_5d"] < 0:
-                    main_factors.append(f"Recent 5-day momentum is negative at {technical_signals['momentum_5d']}%")
-                if news_sentiment_score < 0:
-                    main_factors.append(f"News sentiment is negative with a score of {news_sentiment_score}")
+                if action == "buy":
+                    main_factors.append("Key factors driving the BUY signal (SHAP analysis):")
+                    for feature, value in top_positive[:3]:  # Top 3 positive factors
+                        main_factors.append(f"• {feature}: +{value:.3f} contribution")
+                elif action == "sell":
+                    main_factors.append("Key factors driving the SELL signal (SHAP analysis):")
+                    for feature, value in top_negative[:3]:  # Top 3 negative factors
+                        main_factors.append(f"• {feature}: {value:.3f} contribution")
+                else:  # hold
+                    main_factors.append("Balanced factors suggesting HOLD (SHAP analysis):")
+                    for feature, value in (top_positive[:2] + top_negative[:2]):
+                        main_factors.append(f"• {feature}: {value:+.3f} contribution")
                 
-                explanation = {
-                    "summary": f"The model recommends a SELL action with {confidence*100:.1f}% confidence based on technical indicators and news sentiment.",
-                    "main_factors": main_factors,
-                    "factor_weights": {
-                        "technical_analysis": 0.7,
-                        "news_sentiment": 0.3
-                    }
-                }
-            else:  # hold
-                main_factors = []
-                if 40 <= technical_signals["rsi"] <= 60:
-                    main_factors.append(f"RSI is neutral at {technical_signals['rsi']}")
-                if abs(technical_signals["macd"] - technical_signals["macd_signal"]) < 0.001:
-                    main_factors.append("MACD is close to signal line, suggesting sideways movement")
-                if abs(technical_signals["momentum_5d"]) < 1:
-                    main_factors.append(f"Recent 5-day momentum is flat at {technical_signals['momentum_5d']}%")
-                if abs(news_sentiment_score) < 0.2:
-                    main_factors.append(f"News sentiment is neutral with a score of {news_sentiment_score}")
+                # Extract feature weights from SHAP
+                total_abs_contribution = sum(abs(v) for v in contributions.values())
+                if total_abs_contribution > 0:
+                    for feature, contribution in contributions.items():
+                        weight = abs(contribution) / total_abs_contribution
+                        if weight > 0.05:  # Only include significant features
+                            factor_weights[feature] = weight
+            
+            else:
+                # Fall back to technical analysis explanation
+                if action == "buy":
+                    if technical_signals["rsi"] < 40:
+                        main_factors.append(f"RSI is relatively low at {technical_signals['rsi']}, indicating potential overselling")
+                    if technical_signals["macd"] > technical_signals["macd_signal"]:
+                        main_factors.append("MACD is above signal line, suggesting positive momentum")
+                    if technical_signals["momentum_5d"] > 0:
+                        main_factors.append(f"Recent 5-day momentum is positive at {technical_signals['momentum_5d']}%")
+                    if news_sentiment_score > 0:
+                        main_factors.append(f"News sentiment is positive with a score of {news_sentiment_score}")
                 
-                explanation = {
-                    "summary": f"The model recommends a HOLD action with {confidence*100:.1f}% confidence based on technical indicators and news sentiment.",
-                    "main_factors": main_factors,
-                    "factor_weights": {
-                        "technical_analysis": 0.7,
-                        "news_sentiment": 0.3
-                    }
+                factor_weights = {
+                    "technical_analysis": 0.7,
+                    "news_sentiment": 0.3
                 }
+            
+            explanation = {
+                "summary": f"The model recommends a {action.upper()} action with {confidence*100:.1f}% confidence based on {'SHAP feature analysis' if shap_explanations else 'technical indicators and news sentiment'}.",
+                "main_factors": main_factors,
+                "factor_weights": factor_weights,
+                "shap_available": bool(shap_explanations)
+            }
+            # Handle sell and hold actions in the fallback logic above
+            if not shap_explanations:
+                if action == "sell":
+                    if technical_signals["rsi"] > 60:
+                        main_factors.append(f"RSI is relatively high at {technical_signals['rsi']}, indicating potential overbuying")
+                    if technical_signals["macd"] < technical_signals["macd_signal"]:
+                        main_factors.append("MACD is below signal line, suggesting negative momentum")
+                    if technical_signals["momentum_5d"] < 0:
+                        main_factors.append(f"Recent 5-day momentum is negative at {technical_signals['momentum_5d']}%")
+                    if news_sentiment_score < 0:
+                        main_factors.append(f"News sentiment is negative with a score of {news_sentiment_score}")
+                elif action == "hold":
+                    if 40 <= technical_signals["rsi"] <= 60:
+                        main_factors.append(f"RSI is neutral at {technical_signals['rsi']}")
+                    if abs(technical_signals["macd"] - technical_signals["macd_signal"]) < 0.001:
+                        main_factors.append("MACD is close to signal line, suggesting sideways movement")
+                    if abs(technical_signals["momentum_5d"]) < 1:
+                        main_factors.append(f"Recent 5-day momentum is flat at {technical_signals['momentum_5d']}%")
+                    if abs(news_sentiment_score) < 0.2:
+                        main_factors.append(f"News sentiment is neutral with a score of {news_sentiment_score}")
         else:
             # This is a price prediction
             predicted_price = prediction["predicted_price"]
@@ -461,17 +499,6 @@ async def get_prediction_explanation(
             predicted_change = prediction["predicted_change_percent"]
             news_sentiment_included = prediction.get("news_sentiment_included", False)
             news_sentiment = prediction.get("news_sentiment", {"score": 0})
-            
-            # Generate explanation based on prediction
-            main_factors = []
-            if predicted_change > 0:
-                main_factors.append(f"Historical price trend shows upward momentum of approximately {predicted_change/2:.1f}%")
-                if news_sentiment_included and news_sentiment["score"] > 0:
-                    main_factors.append(f"Positive news sentiment with a score of {news_sentiment['score']} contributes approximately {predicted_change/2:.1f}% to the prediction")
-            else:
-                main_factors.append(f"Historical price trend shows downward momentum of approximately {predicted_change/2:.1f}%")
-                if news_sentiment_included and news_sentiment["score"] < 0:
-                    main_factors.append(f"Negative news sentiment with a score of {news_sentiment['score']} contributes approximately {predicted_change/2:.1f}% to the prediction")
             
             # Add prediction window context
             window_context = {
@@ -484,14 +511,55 @@ async def get_prediction_explanation(
             }
             timeframe = window_context.get(prediction_window, prediction_window)
             
-            explanation = {
-                "summary": f"The model predicts a {predicted_change:.1f}% {'increase' if predicted_change > 0 else 'decrease'} in {ticker} price over a {timeframe} timeframe, from ₹{current_price:.2f} to ₹{predicted_price:.2f}.",
-                "main_factors": main_factors,
-                "factor_weights": {
+            # Use SHAP explanations if available, otherwise fall back to basic explanation
+            main_factors = []
+            factor_weights = {}
+            
+            if shap_explanations and "feature_contributions" in shap_explanations:
+                # Use actual SHAP explanations for price prediction
+                contributions = shap_explanations["feature_contributions"]
+                top_positive = shap_explanations.get("top_positive_features", [])
+                top_negative = shap_explanations.get("top_negative_features", [])
+                
+                main_factors.append(f"SHAP analysis for {predicted_change:.1f}% {'increase' if predicted_change > 0 else 'decrease'} prediction:")
+                
+                if predicted_change > 0:
+                    for feature, value in top_positive[:4]:  # Top 4 positive factors
+                        main_factors.append(f"• {feature}: +{value:.3f} (driving price up)")
+                else:
+                    for feature, value in top_negative[:4]:  # Top 4 negative factors
+                        main_factors.append(f"• {feature}: {value:.3f} (driving price down)")
+                
+                # Extract feature weights from SHAP
+                total_abs_contribution = sum(abs(v) for v in contributions.values())
+                if total_abs_contribution > 0:
+                    for feature, contribution in contributions.items():
+                        weight = abs(contribution) / total_abs_contribution
+                        if weight > 0.05:  # Only include significant features
+                            factor_weights[feature] = weight
+            
+            else:
+                # Fall back to basic explanation
+                if predicted_change > 0:
+                    main_factors.append(f"Historical price trend shows upward momentum of approximately {predicted_change/2:.1f}%")
+                    if news_sentiment_included and news_sentiment["score"] > 0:
+                        main_factors.append(f"Positive news sentiment with a score of {news_sentiment['score']} contributes approximately {predicted_change/2:.1f}% to the prediction")
+                else:
+                    main_factors.append(f"Historical price trend shows downward momentum of approximately {predicted_change/2:.1f}%")
+                    if news_sentiment_included and news_sentiment["score"] < 0:
+                        main_factors.append(f"Negative news sentiment with a score of {news_sentiment['score']} contributes approximately {predicted_change/2:.1f}% to the prediction")
+                
+                factor_weights = {
                     "historical_price_trend": 0.5,
                     "technical_indicators": 0.3,
                     "news_sentiment": 0.2 if news_sentiment_included else 0
                 }
+            
+            explanation = {
+                "summary": f"The model predicts a {predicted_change:.1f}% {'increase' if predicted_change > 0 else 'decrease'} in {ticker} price over a {timeframe} timeframe, from ₹{current_price:.2f} to ₹{predicted_price:.2f} using {'SHAP feature analysis' if shap_explanations else 'traditional analysis'}.",
+                "main_factors": main_factors,
+                "factor_weights": factor_weights,
+                "shap_available": bool(shap_explanations)
             }
         
         return explanation

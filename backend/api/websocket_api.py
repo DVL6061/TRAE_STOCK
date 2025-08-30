@@ -15,9 +15,9 @@ from contextlib import asynccontextmanager
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 # Import our services
-from app.services.websocket_service import WebSocketDataStreamer, MessageType
-from app.services.prediction_service import PredictionService
-from app.data.angel_one_client import AngelOneClient
+from backend.app.services.websocket_service import WebSocketDataStreamer, MessageType
+from backend.app.services.prediction_service import PredictionService
+from backend.core.data_fetcher import AngelOneClient
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)

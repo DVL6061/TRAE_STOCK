@@ -153,12 +153,12 @@ Build a comprehensive, enterprise-grade stock forecasting system that integrates
 ### LOW PRIORITY (Production & Scaling)
 
 #### 1. Deployment & DevOps
-- [ ] Docker containerization
-- [ ] AWS EC2 deployment scripts
-- [ ] Nginx configuration with SSL
+- [x] Docker containerization
+- [x] AWS EC2 deployment scripts
+- [x] Nginx configuration with SSL
+- [x] Monitoring and alerting system (Prometheus + Grafana)
+- [x] Database integration (PostgreSQL/Redis)
 - [ ] CI/CD pipeline setup
-- [ ] Monitoring and alerting system
-- [ ] Database integration (PostgreSQL/MongoDB)
 
 #### 2. Testing & Quality Assurance
 - [ ] Unit tests for all components
@@ -342,6 +342,239 @@ npm start
 - **Testing**: Write tests for new functionality
 - **Documentation**: Update docstrings and comments for new code
 
+## 🚀 DEPLOYMENT GUIDE
+
+### Docker Deployment (Recommended)
+
+The project includes complete Docker containerization with multi-service architecture:
+
+#### Prerequisites
+- Docker and Docker Compose installed
+- At least 4GB RAM available
+- Ports 80, 443, 8000, 3000, 5432, 6379 available
+
+#### Quick Start
+```bash
+# Clone the repository
+git clone <repository-url>
+cd TRAE_STOCK
+
+# Create environment file
+cp .env.example .env
+# Edit .env with your API keys and configuration
+
+# Build and start all services
+docker-compose up -d
+
+# Check service status
+docker-compose ps
+
+# View logs
+docker-compose logs -f backend
+```
+
+#### Services Included
+- **Backend**: FastAPI application (port 8000)
+- **Frontend**: React.js application (port 3000)
+- **Database**: PostgreSQL (port 5432)
+- **Cache**: Redis (port 6379)
+- **Reverse Proxy**: Nginx (ports 80, 443)
+- **Monitoring**: Prometheus (port 9090) + Grafana (port 3001)
+
+#### Environment Configuration
+Create `.env` file with required variables:
+```env
+# API Keys
+ANGEL_ONE_API_KEY=your_angel_one_api_key
+ANGEL_ONE_CLIENT_ID=your_client_id
+ANGEL_ONE_PASSWORD=your_password
+NEWS_API_KEY=your_news_api_key
+ALPHAVANTAGE_API_KEY=your_alphavantage_key
+
+# Database
+POSTGRES_DB=stockdb
+POSTGRES_USER=stockuser
+POSTGRES_PASSWORD=secure_password
+DATABASE_URL=postgresql://stockuser:secure_password@postgres:5432/stockdb
+
+# Redis
+REDIS_URL=redis://redis:6379/0
+
+# Application
+ENVIRONMENT=production
+SECRET_KEY=your_secret_key_here
+CORS_ORIGINS=http://localhost:3000,https://yourdomain.com
+
+# SSL (for production)
+SSL_EMAIL=your-email@domain.com
+DOMAIN_NAME=yourdomain.com
+```
+
+### AWS EC2 Deployment
+
+#### Automated Deployment Script
+Use the provided `deploy.sh` script for automated AWS EC2 setup:
+
+```bash
+# On your EC2 instance (Ubuntu 20.04+ recommended)
+wget https://raw.githubusercontent.com/your-repo/TRAE_STOCK/main/deploy.sh
+chmod +x deploy.sh
+sudo ./deploy.sh
+```
+
+#### Manual AWS EC2 Setup
+
+1. **Launch EC2 Instance**
+   - Instance Type: t3.medium or larger (minimum 4GB RAM)
+   - OS: Ubuntu 20.04 LTS
+   - Security Groups: Allow ports 22, 80, 443
+   - Storage: 20GB+ SSD
+
+2. **Install Dependencies**
+```bash
+# Update system
+sudo apt update && sudo apt upgrade -y
+
+# Install Docker
+curl -fsSL https://get.docker.com -o get-docker.sh
+sudo sh get-docker.sh
+sudo usermod -aG docker $USER
+
+# Install Docker Compose
+sudo curl -L "https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+sudo chmod +x /usr/local/bin/docker-compose
+
+# Install Certbot for SSL
+sudo apt install certbot python3-certbot-nginx -y
+```
+
+3. **Deploy Application**
+```bash
+# Clone repository
+git clone <your-repository-url>
+cd TRAE_STOCK
+
+# Configure environment
+cp .env.example .env
+nano .env  # Edit with your configuration
+
+# Start services
+docker-compose up -d
+
+# Setup SSL certificate
+sudo certbot --nginx -d yourdomain.com
+```
+
+#### SSL Configuration
+The deployment includes automatic SSL setup with Let's Encrypt:
+
+```bash
+# Generate SSL certificate
+sudo certbot certonly --standalone -d yourdomain.com --email your-email@domain.com
+
+# Auto-renewal (already configured in deploy.sh)
+sudo crontab -e
+# Add: 0 12 * * * /usr/bin/certbot renew --quiet
+```
+
+### Monitoring & Maintenance
+
+#### Health Checks
+```bash
+# Check all services
+docker-compose ps
+
+# Check specific service logs
+docker-compose logs -f backend
+docker-compose logs -f frontend
+docker-compose logs -f nginx
+
+# Check system resources
+docker stats
+```
+
+#### Monitoring Dashboard
+- **Grafana**: http://your-domain:3001 (admin/admin)
+- **Prometheus**: http://your-domain:9090
+- **API Health**: http://your-domain/api/health
+
+#### Backup & Recovery
+Automated daily backups are configured:
+
+```bash
+# Manual backup
+docker-compose exec postgres pg_dump -U stockuser stockdb > backup_$(date +%Y%m%d).sql
+
+# Restore from backup
+docker-compose exec -T postgres psql -U stockuser stockdb < backup_20241201.sql
+```
+
+#### Scaling & Performance
+
+1. **Horizontal Scaling**
+```yaml
+# In docker-compose.yml
+backend:
+  deploy:
+    replicas: 3
+  scale: 3
+```
+
+2. **Resource Limits**
+```yaml
+backend:
+  deploy:
+    resources:
+      limits:
+        memory: 1G
+        cpus: '0.5'
+```
+
+3. **Load Balancing**
+Nginx is configured for load balancing multiple backend instances.
+
+### Troubleshooting
+
+#### Common Issues
+
+1. **Port Conflicts**
+```bash
+# Check port usage
+sudo netstat -tulpn | grep :8000
+
+# Stop conflicting services
+sudo systemctl stop apache2
+```
+
+2. **Memory Issues**
+```bash
+# Check memory usage
+free -h
+docker stats
+
+# Restart services if needed
+docker-compose restart
+```
+
+3. **SSL Certificate Issues**
+```bash
+# Check certificate status
+sudo certbot certificates
+
+# Renew certificate
+sudo certbot renew
+```
+
+4. **Database Connection Issues**
+```bash
+# Check PostgreSQL status
+docker-compose exec postgres pg_isready
+
+# Reset database
+docker-compose down -v
+docker-compose up -d
+```
+
 ## 🔗 USEFUL RESOURCES
 
 - [Angel One Smart API Documentation](https://smartapi.angelbroking.com/)
@@ -351,6 +584,10 @@ npm start
 - [Tailwind CSS Documentation](https://tailwindcss.com/docs)
 - [XGBoost Documentation](https://xgboost.readthedocs.io/)
 - [Transformers Library](https://huggingface.co/docs/transformers/)
+- [Docker Documentation](https://docs.docker.com/)
+- [AWS EC2 Documentation](https://docs.aws.amazon.com/ec2/)
+- [Nginx Documentation](https://nginx.org/en/docs/)
+- [Let's Encrypt Documentation](https://letsencrypt.org/docs/)
 
 ---
 
