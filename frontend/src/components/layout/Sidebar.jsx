@@ -99,7 +99,7 @@ const Sidebar = ({ isOpen, onClose }) => {
         to={item.href}
         onClick={onClick}
         className={({ isActive: linkActive }) => `
-          group flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-200
+          group flex items-center gap-2 sm:gap-3 rounded-lg px-2 sm:px-3 py-2 text-sm font-medium transition-all duration-200
           ${linkActive || isActive
             ? 'bg-blue-50 text-blue-700 shadow-sm dark:bg-blue-900/20 dark:text-blue-300'
             : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900 dark:text-gray-300 dark:hover:bg-gray-800 dark:hover:text-white'
@@ -108,13 +108,13 @@ const Sidebar = ({ isOpen, onClose }) => {
         title={isOpen ? '' : item.name}
       >
         <div className="relative flex items-center">
-          <Icon className={`h-5 w-5 flex-shrink-0 transition-colors ${
+          <Icon className={`h-4 w-4 sm:h-5 sm:w-5 flex-shrink-0 transition-colors ${
             isActive 
               ? 'text-blue-600 dark:text-blue-400' 
               : 'text-gray-400 group-hover:text-gray-500 dark:group-hover:text-gray-300'
           }`} />
           {item.badge && (
-            <span className={`absolute -top-1 -right-1 h-2 w-2 rounded-full ${
+            <span className={`absolute -top-0.5 -right-0.5 sm:-top-1 sm:-right-1 h-1.5 w-1.5 sm:h-2 sm:w-2 rounded-full ${
               item.badge === 'AI' ? 'bg-purple-500' : 'bg-green-500'
             } animate-pulse`} />
           )}
@@ -162,18 +162,18 @@ const Sidebar = ({ isOpen, onClose }) => {
         lg:translate-x-0 ${isOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
       `}>
         {/* Header */}
-        <div className={`flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700 ${
-          isOpen ? 'px-4' : 'px-2 lg:px-2'
+        <div className={`flex items-center justify-between p-3 sm:p-4 border-b border-gray-200 dark:border-gray-700 ${
+          isOpen ? 'px-3 sm:px-4' : 'px-2 lg:px-2'
         }`}>
           <div className={`flex items-center gap-3 transition-all duration-300 ${
             isOpen ? 'opacity-100' : 'opacity-0 lg:opacity-100'
           }`}>
-            <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center flex-shrink-0">
-              <TrendingUpIcon className="h-5 w-5 text-white" />
+            <div className="h-7 w-7 sm:h-8 sm:w-8 rounded-lg bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center flex-shrink-0">
+              <TrendingUpIcon className="h-4 w-4 sm:h-5 sm:w-5 text-white" />
             </div>
             {isOpen && (
               <div>
-                <h2 className="text-lg font-bold text-gray-900 dark:text-white">
+                <h2 className="text-base sm:text-lg font-bold text-gray-900 dark:text-white">
                   {t('app.title')}
                 </h2>
                 <p className="text-xs text-gray-500 dark:text-gray-400">
@@ -194,7 +194,7 @@ const Sidebar = ({ isOpen, onClose }) => {
         </div>
 
         {/* Navigation */}
-        <nav className="flex-1 overflow-y-auto p-4 space-y-1">
+        <nav className="flex-1 overflow-y-auto p-3 sm:p-4 space-y-1">
           {/* Main Navigation */}
           <div className="space-y-1">
             {navigation.map((item) => (
@@ -219,29 +219,29 @@ const Sidebar = ({ isOpen, onClose }) => {
           {/* AI Features Section */}
           {isOpen && (
             <div className="mb-4">
-              <h3 className="px-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">
+              <h3 className="px-2 sm:px-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">
                 AI Features
               </h3>
-              <div className="space-y-2">
-                <div className="flex items-center gap-3 px-3 py-2 text-sm text-gray-600 dark:text-gray-400">
-                  <CpuChipIcon className="h-4 w-4 text-purple-500" />
+              <div className="space-y-1 sm:space-y-2">
+                <div className="flex items-center gap-2 sm:gap-3 px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm text-gray-600 dark:text-gray-400">
+                  <CpuChipIcon className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-purple-500" />
                   <span>XGBoost Model</span>
-                  <div className="ml-auto h-2 w-2 rounded-full bg-green-500" />
+                  <div className="ml-auto h-1.5 w-1.5 sm:h-2 sm:w-2 rounded-full bg-green-500" />
                 </div>
-                <div className="flex items-center gap-3 px-3 py-2 text-sm text-gray-600 dark:text-gray-400">
-                  <BoltIcon className="h-4 w-4 text-blue-500" />
+                <div className="flex items-center gap-2 sm:gap-3 px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm text-gray-600 dark:text-gray-400">
+                  <BoltIcon className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-blue-500" />
                   <span>Informer Model</span>
-                  <div className="ml-auto h-2 w-2 rounded-full bg-green-500" />
+                  <div className="ml-auto h-1.5 w-1.5 sm:h-2 sm:w-2 rounded-full bg-green-500" />
                 </div>
-                <div className="flex items-center gap-3 px-3 py-2 text-sm text-gray-600 dark:text-gray-400">
-                  <ChartBarIcon className="h-4 w-4 text-green-500" />
+                <div className="flex items-center gap-2 sm:gap-3 px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm text-gray-600 dark:text-gray-400">
+                  <ChartBarIcon className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-green-500" />
                   <span>DQN Trading</span>
-                  <div className="ml-auto h-2 w-2 rounded-full bg-green-500" />
+                  <div className="ml-auto h-1.5 w-1.5 sm:h-2 sm:w-2 rounded-full bg-green-500" />
                 </div>
-                <div className="flex items-center gap-3 px-3 py-2 text-sm text-gray-600 dark:text-gray-400">
-                  <GlobeAltIcon className="h-4 w-4 text-orange-500" />
+                <div className="flex items-center gap-2 sm:gap-3 px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm text-gray-600 dark:text-gray-400">
+                  <GlobeAltIcon className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-orange-500" />
                   <span>FinGPT Sentiment</span>
-                  <div className="ml-auto h-2 w-2 rounded-full bg-green-500" />
+                  <div className="ml-auto h-1.5 w-1.5 sm:h-2 sm:w-2 rounded-full bg-green-500" />
                 </div>
               </div>
             </div>
@@ -249,10 +249,10 @@ const Sidebar = ({ isOpen, onClose }) => {
 
           {/* Market Status */}
           {isOpen && (
-            <div className="bg-gradient-to-r from-green-50 to-blue-50 dark:from-green-900/20 dark:to-blue-900/20 rounded-lg p-3 mb-4">
-              <div className="flex items-center gap-2 mb-2">
-                <div className="h-2 w-2 rounded-full bg-green-500 animate-pulse" />
-                <span className="text-sm font-medium text-gray-900 dark:text-white">
+            <div className="bg-gradient-to-r from-green-50 to-blue-50 dark:from-green-900/20 dark:to-blue-900/20 rounded-lg p-2 sm:p-3 mb-3 sm:mb-4">
+              <div className="flex items-center gap-1.5 sm:gap-2 mb-1.5 sm:mb-2">
+                <div className="h-1.5 w-1.5 sm:h-2 sm:w-2 rounded-full bg-green-500 animate-pulse" />
+                <span className="text-xs sm:text-sm font-medium text-gray-900 dark:text-white">
                   {t('dashboard.marketOpen')}
                 </span>
               </div>
@@ -265,7 +265,7 @@ const Sidebar = ({ isOpen, onClose }) => {
         </nav>
 
         {/* Bottom Navigation */}
-        <div className="border-t border-gray-200 dark:border-gray-700 p-4">
+        <div className="border-t border-gray-200 dark:border-gray-700 p-3 sm:p-4">
           <div className="space-y-1">
             {bottomNavigation.map((item) => (
               <NavItem 
@@ -288,18 +288,18 @@ const Sidebar = ({ isOpen, onClose }) => {
               // For now, we'll just log it
               console.log('Toggle sidebar collapse');
             }}
-            className={`hidden lg:flex items-center justify-center w-full mt-4 p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors ${
-              isOpen ? 'text-sm' : ''
+            className={`hidden lg:flex items-center justify-center w-full mt-3 sm:mt-4 p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors ${
+              isOpen ? 'text-xs sm:text-sm' : ''
             }`}
             title={isOpen ? 'Collapse sidebar' : 'Expand sidebar'}
           >
             {isOpen ? (
               <>
-                <ChartBarIcon className="h-4 w-4 mr-2" />
+                <ChartBarIcon className="h-3.5 w-3.5 sm:h-4 sm:w-4 mr-1.5 sm:mr-2" />
                 <span className="text-xs">Collapse</span>
               </>
             ) : (
-              <ChartBarIcon className="h-4 w-4" />
+              <ChartBarIcon className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
             )}
           </button>
         </div>

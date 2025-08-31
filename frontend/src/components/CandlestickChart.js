@@ -379,27 +379,28 @@ const CandlestickChart = ({
 
   if (!candlestickData) {
     return (
-      <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg">
-        <div className="flex items-center justify-center h-64 text-gray-500 dark:text-gray-400">
-          {t('noDataAvailable')}
+      <div className="bg-white dark:bg-gray-800 p-3 sm:p-4 lg:p-6 rounded-lg shadow-lg">
+        <div className="flex items-center justify-center h-48 sm:h-56 lg:h-64 text-gray-500 dark:text-gray-400">
+          <span className="text-sm sm:text-base">{t('noDataAvailable')}</span>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg">
+    <div className="bg-white dark:bg-gray-800 p-3 sm:p-4 lg:p-6 rounded-lg shadow-lg">
       {/* Header */}
-      <div className="flex flex-wrap items-center justify-between mb-6">
-        <h3 className="text-xl font-semibold text-gray-900 dark:text-white">
-          {symbol} - {t('candlestickChart')} ({timeframe})
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4 sm:mb-6 space-y-3 sm:space-y-0">
+        <h3 className="text-lg sm:text-xl font-semibold text-gray-900 dark:text-white">
+          <span className="block sm:inline">{symbol} - {t('candlestickChart')}</span>
+          <span className="block sm:inline text-sm sm:text-base text-gray-600 dark:text-gray-400 sm:ml-1">({timeframe})</span>
         </h3>
         
         {/* Indicator Controls */}
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-wrap gap-1 sm:gap-2">
           <button
             onClick={() => setShowIndicators(prev => ({ ...prev, sma20: !prev.sma20 }))}
-            className={`px-3 py-1 rounded text-sm font-medium transition-colors ${
+            className={`px-2 sm:px-3 py-1 rounded text-xs sm:text-sm font-medium transition-colors ${
               showIndicators.sma20
                 ? 'bg-yellow-500 text-white'
                 : 'bg-gray-200 text-gray-700 dark:bg-gray-600 dark:text-gray-300'
@@ -410,7 +411,7 @@ const CandlestickChart = ({
           
           <button
             onClick={() => setShowIndicators(prev => ({ ...prev, ema12: !prev.ema12 }))}
-            className={`px-3 py-1 rounded text-sm font-medium transition-colors ${
+            className={`px-2 sm:px-3 py-1 rounded text-xs sm:text-sm font-medium transition-colors ${
               showIndicators.ema12
                 ? 'bg-blue-500 text-white'
                 : 'bg-gray-200 text-gray-700 dark:bg-gray-600 dark:text-gray-300'
@@ -421,7 +422,7 @@ const CandlestickChart = ({
           
           <button
             onClick={() => setShowIndicators(prev => ({ ...prev, ema26: !prev.ema26 }))}
-            className={`px-3 py-1 rounded text-sm font-medium transition-colors ${
+            className={`px-2 sm:px-3 py-1 rounded text-xs sm:text-sm font-medium transition-colors ${
               showIndicators.ema26
                 ? 'bg-purple-500 text-white'
                 : 'bg-gray-200 text-gray-700 dark:bg-gray-600 dark:text-gray-300'
@@ -432,7 +433,7 @@ const CandlestickChart = ({
           
           <button
             onClick={() => setShowIndicators(prev => ({ ...prev, bollinger: !prev.bollinger }))}
-            className={`px-3 py-1 rounded text-sm font-medium transition-colors ${
+            className={`px-2 sm:px-3 py-1 rounded text-xs sm:text-sm font-medium transition-colors ${
               showIndicators.bollinger
                 ? 'bg-red-500 text-white'
                 : 'bg-gray-200 text-gray-700 dark:bg-gray-600 dark:text-gray-300'
@@ -444,30 +445,32 @@ const CandlestickChart = ({
       </div>
 
       {/* Main Candlestick Chart */}
-      <div className="mb-4" style={{ height: `${height}px` }}>
+      <div className="mb-3 sm:mb-4 chart-container" style={{ height: `${Math.max(250, Math.min(height, window.innerWidth < 640 ? 300 : height))}px` }}>
         <Chart type="line" data={candlestickData} options={chartOptions} />
       </div>
 
       {/* Volume Chart */}
       {showIndicators.volume && volumeData && (
-        <div className="mb-4" style={{ height: '120px' }}>
-          <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+        <div className="mb-3 sm:mb-4" style={{ height: '100px' }}>
+          <h4 className="text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
             {t('volume')}
           </h4>
-          <Chart type="bar" data={volumeData} options={volumeOptions} />
+          <div className="chart-container">
+            <Chart type="bar" data={volumeData} options={volumeOptions} />
+          </div>
         </div>
       )}
 
       {/* Secondary Indicator */}
-      <div className="mb-4">
-        <div className="flex items-center justify-between mb-2">
-          <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300">
+      <div className="mb-3 sm:mb-4">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-2 space-y-2 sm:space-y-0">
+          <h4 className="text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300">
             {t('technicalIndicators')}
           </h4>
           <select
             value={selectedIndicator}
             onChange={(e) => setSelectedIndicator(e.target.value)}
-            className="px-3 py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+            className="w-full sm:w-auto px-2 sm:px-3 py-1 text-xs sm:text-sm border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:border-gray-600 dark:text-white"
           >
             <option value="RSI">RSI</option>
             <option value="MACD">MACD</option>
@@ -477,16 +480,22 @@ const CandlestickChart = ({
         </div>
         
         {secondaryIndicatorData && (
-          <div style={{ height: '120px' }}>
-            <Chart type="line" data={secondaryIndicatorData} options={secondaryOptions} />
+          <div style={{ height: '100px' }}>
+            <div className="chart-container">
+              <Chart type="line" data={secondaryIndicatorData} options={secondaryOptions} />
+            </div>
             
             {/* RSI Overbought/Oversold Lines */}
             {selectedIndicator === 'RSI' && (
-              <div className="mt-2 text-xs text-gray-500 dark:text-gray-400">
-                <span className="inline-block w-3 h-3 bg-red-200 border border-red-400 mr-1"></span>
-                Overbought (70+)
-                <span className="inline-block w-3 h-3 bg-green-200 border border-green-400 mr-1 ml-4"></span>
-                Oversold (30-)
+              <div className="mt-2 text-xs text-gray-500 dark:text-gray-400 flex flex-wrap gap-2 sm:gap-4">
+                <div className="flex items-center">
+                  <span className="inline-block w-2 sm:w-3 h-2 sm:h-3 bg-red-200 border border-red-400 mr-1"></span>
+                  <span className="text-xs">Overbought (70+)</span>
+                </div>
+                <div className="flex items-center">
+                  <span className="inline-block w-2 sm:w-3 h-2 sm:h-3 bg-green-200 border border-green-400 mr-1"></span>
+                  <span className="text-xs">Oversold (30-)</span>
+                </div>
               </div>
             )}
           </div>

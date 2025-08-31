@@ -69,41 +69,41 @@ const Footer = () => {
 
   return (
     <footer className="bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-8">
         {/* Main Footer Content */}
-        <div className="py-12">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+        <div className="py-6 sm:py-8 lg:py-12">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 lg:gap-8">
             {/* Brand Section */}
-            <div className="col-span-1 lg:col-span-1">
-              <div className="flex items-center gap-3 mb-4">
-                <div className="h-10 w-10 rounded-lg bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
-                  <ChartBarIcon className="h-6 w-6 text-white" />
+            <div className="col-span-1 sm:col-span-2 lg:col-span-1">
+              <div className="flex items-center gap-2 sm:gap-3 mb-3 sm:mb-4">
+                <div className="h-8 w-8 sm:h-10 sm:w-10 rounded-lg bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
+                  <ChartBarIcon className="h-4 w-4 sm:h-6 sm:w-6 text-white" />
                 </div>
                 <div>
-                  <h3 className="text-lg font-bold text-gray-900 dark:text-white">
+                  <h3 className="text-base sm:text-lg font-bold text-gray-900 dark:text-white">
                     {t('app.title')}
                   </h3>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">
+                  <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400">
                     {t('app.tagline')}
                   </p>
                 </div>
               </div>
-              <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+              <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 mb-3 sm:mb-4">
                 {t('footer.description')}
               </p>
               
               {/* AI Models Status */}
-              <div className="space-y-2">
-                <h4 className="text-sm font-semibold text-gray-900 dark:text-white mb-2">
+              <div className="space-y-1 sm:space-y-2">
+                <h4 className="text-xs sm:text-sm font-semibold text-gray-900 dark:text-white mb-1 sm:mb-2">
                   {t('footer.aiModels')}
                 </h4>
                 {aiModels.map((model) => {
                   const Icon = model.icon;
                   return (
-                    <div key={model.name} className="flex items-center gap-2 text-sm">
-                      <Icon className="h-4 w-4 text-blue-500" />
+                    <div key={model.name} className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm">
+                      <Icon className="h-3 w-3 sm:h-4 sm:w-4 text-blue-500" />
                       <span className="text-gray-700 dark:text-gray-300">{model.name}</span>
-                      <div className={`h-2 w-2 rounded-full ${
+                      <div className={`h-1.5 w-1.5 sm:h-2 sm:w-2 rounded-full ${
                         model.status === 'active' ? 'bg-green-500' : 'bg-red-500'
                       }`} />
                     </div>
@@ -114,15 +114,15 @@ const Footer = () => {
 
             {/* Product Links */}
             <div>
-              <h3 className="text-sm font-semibold text-gray-900 dark:text-white uppercase tracking-wider mb-4">
+              <h3 className="text-xs sm:text-sm font-semibold text-gray-900 dark:text-white uppercase tracking-wider mb-2 sm:mb-4">
                 {t('footer.sections.product')}
               </h3>
-              <ul className="space-y-3">
+              <ul className="space-y-2 sm:space-y-3">
                 {footerLinks.product.map((link) => (
                   <li key={link.name}>
                     <a
                       href={link.href}
-                      className="text-sm text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white transition-colors"
+                      className="text-xs sm:text-sm text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white transition-colors"
                     >
                       {link.name}
                     </a>
@@ -133,15 +133,15 @@ const Footer = () => {
 
             {/* Company Links */}
             <div>
-              <h3 className="text-sm font-semibold text-gray-900 dark:text-white uppercase tracking-wider mb-4">
+              <h3 className="text-xs sm:text-sm font-semibold text-gray-900 dark:text-white uppercase tracking-wider mb-2 sm:mb-4">
                 {t('footer.sections.company')}
               </h3>
-              <ul className="space-y-3">
+              <ul className="space-y-2 sm:space-y-3">
                 {footerLinks.company.map((link) => (
                   <li key={link.name}>
                     <a
                       href={link.href}
-                      className="text-sm text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white transition-colors"
+                      className="text-xs sm:text-sm text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white transition-colors"
                     >
                       {link.name}
                     </a>
@@ -152,15 +152,15 @@ const Footer = () => {
 
             {/* Support Links */}
             <div>
-              <h3 className="text-sm font-semibold text-gray-900 dark:text-white uppercase tracking-wider mb-4">
+              <h3 className="text-xs sm:text-sm font-semibold text-gray-900 dark:text-white uppercase tracking-wider mb-2 sm:mb-4">
                 {t('footer.sections.support')}
               </h3>
-              <ul className="space-y-3">
+              <ul className="space-y-2 sm:space-y-3">
                 {footerLinks.support.map((link) => (
                   <li key={link.name}>
                     <a
                       href={link.href}
-                      className="text-sm text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white transition-colors"
+                      className="text-xs sm:text-sm text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white transition-colors"
                     >
                       {link.name}
                     </a>
@@ -172,12 +172,12 @@ const Footer = () => {
         </div>
 
         {/* Market Data Status */}
-        <div className="py-6 border-t border-gray-200 dark:border-gray-700">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="py-4 sm:py-6 border-t border-gray-200 dark:border-gray-700">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
             <div className="flex items-center gap-2">
-              <GlobeAltIcon className="h-5 w-5 text-blue-500" />
+              <GlobeAltIcon className="h-4 w-4 sm:h-5 sm:w-5 text-blue-500" />
               <div>
-                <p className="text-sm font-medium text-gray-900 dark:text-white">
+                <p className="text-xs sm:text-sm font-medium text-gray-900 dark:text-white">
                   {t('footer.dataProvider')}
                 </p>
                 <p className="text-xs text-gray-500 dark:text-gray-400">
@@ -187,9 +187,9 @@ const Footer = () => {
             </div>
             
             <div className="flex items-center gap-2">
-              <ShieldCheckIcon className="h-5 w-5 text-green-500" />
+              <ShieldCheckIcon className="h-4 w-4 sm:h-5 sm:w-5 text-green-500" />
               <div>
-                <p className="text-sm font-medium text-gray-900 dark:text-white">
+                <p className="text-xs sm:text-sm font-medium text-gray-900 dark:text-white">
                   {t('footer.lastUpdate')}
                 </p>
                 <p className="text-xs text-gray-500 dark:text-gray-400">
@@ -198,10 +198,10 @@ const Footer = () => {
               </div>
             </div>
             
-            <div className="flex items-center gap-2">
-              <CpuChipIcon className="h-5 w-5 text-purple-500" />
+            <div className="flex items-center gap-2 sm:col-span-2 lg:col-span-1">
+              <CpuChipIcon className="h-4 w-4 sm:h-5 sm:w-5 text-purple-500" />
               <div>
-                <p className="text-sm font-medium text-gray-900 dark:text-white">
+                <p className="text-xs sm:text-sm font-medium text-gray-900 dark:text-white">
                   {t('footer.aiPowered')}
                 </p>
                 <p className="text-xs text-gray-500 dark:text-gray-400">
@@ -213,9 +213,9 @@ const Footer = () => {
         </div>
 
         {/* Legal Links */}
-        <div className="py-4 border-t border-gray-200 dark:border-gray-700">
-          <div className="flex flex-col md:flex-row justify-between items-center gap-4">
-            <div className="flex flex-wrap gap-6">
+        <div className="py-3 sm:py-4 border-t border-gray-200 dark:border-gray-700">
+          <div className="flex flex-col sm:flex-row justify-between items-center gap-3 sm:gap-4">
+            <div className="flex flex-wrap gap-3 sm:gap-6 justify-center sm:justify-start">
               {footerLinks.legal.map((link) => (
                 <a
                   key={link.name}
@@ -229,31 +229,31 @@ const Footer = () => {
             
             <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
               <span>{t('footer.language')}: {i18n.language === 'hi' ? 'हिंदी' : 'English'}</span>
-              <span>•</span>
-              <span>{t('footer.region')}: India</span>
+              <span className="hidden sm:inline">•</span>
+              <span className="hidden sm:inline">{t('footer.region')}: India</span>
             </div>
           </div>
         </div>
 
         {/* Bottom Bar */}
-        <div className="py-6 border-t border-gray-200 dark:border-gray-700">
-          <div className="flex flex-col md:flex-row justify-between items-center gap-4">
-            <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
+        <div className="py-4 sm:py-6 border-t border-gray-200 dark:border-gray-700">
+          <div className="flex flex-col sm:flex-row justify-between items-center gap-3 sm:gap-4">
+            <div className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm text-gray-600 dark:text-gray-400">
               <span>© {currentYear} {t('app.title')}.</span>
-              <span>{t('footer.allRightsReserved')}</span>
+              <span className="hidden sm:inline">{t('footer.allRightsReserved')}</span>
             </div>
             
-            <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
+            <div className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm text-gray-600 dark:text-gray-400">
               <span>{t('footer.madeWith')}</span>
-              <HeartIcon className="h-4 w-4 text-red-500" />
+              <HeartIcon className="h-3 w-3 sm:h-4 sm:w-4 text-red-500" />
               <span>{t('footer.inIndia')}</span>
             </div>
           </div>
         </div>
 
         {/* Disclaimer */}
-        <div className="py-4 border-t border-gray-200 dark:border-gray-700">
-          <div className="bg-yellow-50 dark:bg-yellow-900/20 rounded-lg p-4">
+        <div className="py-3 sm:py-4 border-t border-gray-200 dark:border-gray-700">
+          <div className="bg-yellow-50 dark:bg-yellow-900/20 rounded-lg p-3 sm:p-4">
             <p className="text-xs text-yellow-800 dark:text-yellow-200">
               <strong>{t('footer.disclaimer.title')}:</strong> {t('footer.disclaimer.text')}
             </p>

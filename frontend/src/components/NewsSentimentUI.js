@@ -56,31 +56,33 @@ const NewsItem = ({ article, onSymbolClick }) => {
   const sentimentColorClass = getSentimentColor(article.sentiment, article.sentiment_score);
 
   return (
-    <div className="bg-white dark:bg-gray-700 rounded-lg shadow-md p-4 mb-4 border-l-4 border-blue-500 hover:shadow-lg transition-shadow">
+    <div className="bg-white dark:bg-gray-700 rounded-lg shadow-md p-3 sm:p-4 mb-3 sm:mb-4 border-l-4 border-blue-500 hover:shadow-lg transition-shadow">
       {/* Header */}
-      <div className="flex items-start justify-between mb-3">
-        <div className="flex items-center">
-          <SentimentIcon sentiment={article.sentiment} score={article.sentiment_score} />
-          <div>
-            <h3 className="font-semibold text-gray-900 dark:text-white text-sm md:text-base line-clamp-2">
+      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between mb-2 sm:mb-3 space-y-2 sm:space-y-0">
+        <div className="flex items-start space-x-2 sm:space-x-3 flex-1">
+          <div className="flex-shrink-0 mt-1">
+            <SentimentIcon sentiment={article.sentiment} score={article.sentiment_score} />
+          </div>
+          <div className="flex-1 min-w-0">
+            <h3 className="font-semibold text-gray-900 dark:text-white text-sm sm:text-base line-clamp-2 leading-tight">
               {article.title}
             </h3>
-            <div className="flex items-center text-xs text-gray-500 dark:text-gray-400 mt-1">
-              <span className="mr-3">{article.source}</span>
-              <span>{formatTimeAgo(article.published_at)}</span>
+            <div className="flex flex-col sm:flex-row sm:items-center text-xs text-gray-500 dark:text-gray-400 mt-1 space-y-1 sm:space-y-0">
+              <span className="sm:mr-3">{article.source}</span>
+              <span className="sm:border-l sm:border-gray-300 sm:pl-3">{formatTimeAgo(article.published_at)}</span>
             </div>
           </div>
         </div>
         
         {/* Sentiment Badge */}
-        <div className={`px-2 py-1 rounded-full text-xs font-medium ${sentimentColorClass}`}>
-          {t(article.sentiment)} ({(article.sentiment_score * 100).toFixed(0)}%)
+        <div className={`px-2 py-1 rounded-full text-xs font-medium self-start sm:self-auto flex-shrink-0 ${sentimentColorClass}`}>
+          <span className="hidden sm:inline">{t(article.sentiment)} </span>({(article.sentiment_score * 100).toFixed(0)}%)
         </div>
       </div>
 
       {/* Content */}
-      <div className="mb-3">
-        <p className={`text-gray-700 dark:text-gray-300 text-sm ${
+      <div className="mb-2 sm:mb-3">
+        <p className={`text-gray-700 dark:text-gray-300 text-xs sm:text-sm leading-relaxed ${
           expanded ? '' : 'line-clamp-3'
         }`}>
           {article.content || article.description}
@@ -98,16 +100,16 @@ const NewsItem = ({ article, onSymbolClick }) => {
 
       {/* Related Symbols */}
       {article.related_symbols && article.related_symbols.length > 0 && (
-        <div className="mb-3">
-          <span className="text-xs text-gray-500 dark:text-gray-400 mr-2">
+        <div className="mb-2 sm:mb-3">
+          <span className="text-xs text-gray-500 dark:text-gray-400 block sm:inline sm:mr-2 mb-1 sm:mb-0">
             {t('relatedStocks')}:
           </span>
-          <div className="flex flex-wrap gap-1">
+          <div className="flex flex-wrap gap-1 sm:gap-2">
             {article.related_symbols.map((symbol, index) => (
               <button
                 key={index}
                 onClick={() => onSymbolClick(symbol)}
-                className="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded hover:bg-blue-200 transition-colors dark:bg-blue-900 dark:text-blue-200"
+                className="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded hover:bg-blue-200 transition-colors dark:bg-blue-900 dark:text-blue-200 font-medium"
               >
                 {symbol}
               </button>
@@ -118,8 +120,8 @@ const NewsItem = ({ article, onSymbolClick }) => {
 
       {/* Keywords/Tags */}
       {article.keywords && article.keywords.length > 0 && (
-        <div className="mb-3">
-          <div className="flex flex-wrap gap-1">
+        <div className="mb-2 sm:mb-3">
+          <div className="flex flex-wrap gap-1 sm:gap-2">
             {article.keywords.slice(0, 5).map((keyword, index) => (
               <span
                 key={index}
@@ -133,15 +135,16 @@ const NewsItem = ({ article, onSymbolClick }) => {
       )}
 
       {/* Footer */}
-      <div className="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400">
-        <div className="flex items-center space-x-4">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between text-xs text-gray-500 dark:text-gray-400 space-y-2 sm:space-y-0">
+        <div className="flex flex-col sm:flex-row sm:items-center space-y-1 sm:space-y-0 sm:space-x-4">
           {article.url && (
             <a
               href={article.url}
               target="_blank"
               rel="noopener noreferrer"
-              className="text-blue-500 hover:text-blue-600 font-medium"
+              className="text-blue-500 hover:text-blue-600 font-medium inline-flex items-center"
             >
+              <span className="mr-1">🔗</span>
               {t('readFull')}
             </a>
           )}
@@ -149,13 +152,13 @@ const NewsItem = ({ article, onSymbolClick }) => {
           {article.impact_score && (
             <span className="flex items-center">
               <span className="mr-1">📊</span>
-              {t('impact')}: {(article.impact_score * 100).toFixed(0)}%
+              <span className="hidden sm:inline">{t('impact')}: </span>{(article.impact_score * 100).toFixed(0)}%
             </span>
           )}
         </div>
         
         {article.category && (
-          <span className="px-2 py-1 bg-gray-200 text-gray-700 rounded dark:bg-gray-600 dark:text-gray-300">
+          <span className="px-2 py-1 bg-gray-200 text-gray-700 rounded dark:bg-gray-600 dark:text-gray-300 self-start sm:self-auto">
             {t(article.category)}
           </span>
         )}
@@ -185,52 +188,59 @@ const SentimentSummary = ({ articles }) => {
   if (total === 0) return null;
 
   return (
-    <div className="bg-white dark:bg-gray-700 rounded-lg shadow-md p-4 mb-6">
-      <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+    <div className="bg-white dark:bg-gray-700 rounded-lg shadow-md p-3 sm:p-4 mb-4 sm:mb-6">
+      <h3 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white mb-3 sm:mb-4">
         {t('sentimentOverview')}
       </h3>
       
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
         <div className="text-center">
-          <div className="text-2xl font-bold text-green-600">
+          <div className="text-xl sm:text-2xl font-bold text-green-600">
             {sentimentStats.positive}
           </div>
-          <div className="text-sm text-gray-600 dark:text-gray-400">
-            {t('positive')} ({((sentimentStats.positive / total) * 100).toFixed(1)}%)
+          <div className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 leading-tight">
+            <div className="sm:hidden">{t('positive')}</div>
+            <div className="hidden sm:block">{t('positive')} ({((sentimentStats.positive / total) * 100).toFixed(1)}%)</div>
+            <div className="sm:hidden text-xs">({((sentimentStats.positive / total) * 100).toFixed(1)}%)</div>
           </div>
         </div>
         
         <div className="text-center">
-          <div className="text-2xl font-bold text-red-600">
+          <div className="text-xl sm:text-2xl font-bold text-red-600">
             {sentimentStats.negative}
           </div>
-          <div className="text-sm text-gray-600 dark:text-gray-400">
-            {t('negative')} ({((sentimentStats.negative / total) * 100).toFixed(1)}%)
+          <div className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 leading-tight">
+            <div className="sm:hidden">{t('negative')}</div>
+            <div className="hidden sm:block">{t('negative')} ({((sentimentStats.negative / total) * 100).toFixed(1)}%)</div>
+            <div className="sm:hidden text-xs">({((sentimentStats.negative / total) * 100).toFixed(1)}%)</div>
           </div>
         </div>
         
         <div className="text-center">
-          <div className="text-2xl font-bold text-gray-600">
+          <div className="text-xl sm:text-2xl font-bold text-gray-600">
             {sentimentStats.neutral}
           </div>
-          <div className="text-sm text-gray-600 dark:text-gray-400">
-            {t('neutral')} ({((sentimentStats.neutral / total) * 100).toFixed(1)}%)
+          <div className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 leading-tight">
+            <div className="sm:hidden">{t('neutral')}</div>
+            <div className="hidden sm:block">{t('neutral')} ({((sentimentStats.neutral / total) * 100).toFixed(1)}%)</div>
+            <div className="sm:hidden text-xs">({((sentimentStats.neutral / total) * 100).toFixed(1)}%)</div>
           </div>
         </div>
         
         <div className="text-center">
-          <div className="text-2xl font-bold text-blue-600">
+          <div className="text-xl sm:text-2xl font-bold text-blue-600">
             {(sentimentStats.avgScore * 100).toFixed(1)}%
           </div>
-          <div className="text-sm text-gray-600 dark:text-gray-400">
-            {t('avgConfidence')}
+          <div className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 leading-tight">
+            <div className="sm:hidden">{t('avgConfidence')}</div>
+            <div className="hidden sm:block">{t('avgConfidence')}</div>
           </div>
         </div>
       </div>
       
       {/* Sentiment Bar */}
-      <div className="mt-4">
-        <div className="flex h-2 bg-gray-200 rounded-full overflow-hidden">
+      <div className="mt-3 sm:mt-4">
+        <div className="flex h-2 sm:h-3 bg-gray-200 rounded-full overflow-hidden">
           <div 
             className="bg-green-500" 
             style={{ width: `${(sentimentStats.positive / total) * 100}%` }}
@@ -374,43 +384,43 @@ const NewsSentimentUI = ({ selectedSymbol, onSymbolChange }) => {
   };
 
   return (
-    <div className="bg-gray-50 dark:bg-gray-900 min-h-screen p-6">
+    <div className="bg-gray-50 dark:bg-gray-900 min-h-screen p-3 sm:p-4 lg:p-6">
       {/* Header */}
-      <div className="mb-6">
-        <div className="flex items-center justify-between mb-4">
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
+      <div className="mb-4 sm:mb-6">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-3 sm:mb-4 space-y-2 sm:space-y-0">
+          <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900 dark:text-white">
             {t('newsAndSentiment')}
           </h1>
           
           {/* Connection Status */}
-          <div className={`px-3 py-1 rounded-full text-sm font-medium ${
+          <div className={`px-2 sm:px-3 py-1 rounded-full text-xs sm:text-sm font-medium self-start sm:self-auto ${
             connectionStatus === 'Connected' 
               ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
               : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'
           }`}>
-            {t('newsStream')}: {connectionStatus}
+            <span className="hidden sm:inline">{t('newsStream')}: </span>{connectionStatus}
           </div>
         </div>
 
         {/* Search and Filters */}
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-4">
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-3 sm:p-4">
           {/* Search Bar */}
-          <div className="mb-4">
+          <div className="mb-3 sm:mb-4">
             <input
               type="text"
               placeholder={t('searchNews')}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+              className="w-full px-3 sm:px-4 py-2 text-sm sm:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:border-gray-600 dark:text-white"
             />
           </div>
           
           {/* Filter Controls */}
-          <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-2 sm:gap-3 lg:gap-4">
             <select
               value={filters.sentiment}
               onChange={(e) => setFilters(prev => ({ ...prev, sentiment: e.target.value }))}
-              className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+              className="w-full px-2 sm:px-3 py-2 text-sm sm:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
             >
               <option value="all">{t('allSentiments')}</option>
               <option value="positive">{t('positive')}</option>
@@ -421,7 +431,7 @@ const NewsSentimentUI = ({ selectedSymbol, onSymbolChange }) => {
             <select
               value={filters.category}
               onChange={(e) => setFilters(prev => ({ ...prev, category: e.target.value }))}
-              className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+              className="w-full px-2 sm:px-3 py-2 text-sm sm:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
             >
               <option value="all">{t('allCategories')}</option>
               {filterOptions.categories.map(category => (
@@ -432,7 +442,7 @@ const NewsSentimentUI = ({ selectedSymbol, onSymbolChange }) => {
             <select
               value={filters.timeRange}
               onChange={(e) => setFilters(prev => ({ ...prev, timeRange: e.target.value }))}
-              className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+              className="w-full px-2 sm:px-3 py-2 text-sm sm:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
             >
               <option value="all">{t('allTime')}</option>
               <option value="1h">{t('lastHour')}</option>
@@ -444,7 +454,7 @@ const NewsSentimentUI = ({ selectedSymbol, onSymbolChange }) => {
             <select
               value={filters.source}
               onChange={(e) => setFilters(prev => ({ ...prev, source: e.target.value }))}
-              className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+              className="w-full px-2 sm:px-3 py-2 text-sm sm:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
             >
               <option value="all">{t('allSources')}</option>
               {filterOptions.sources.map(source => (
@@ -452,7 +462,7 @@ const NewsSentimentUI = ({ selectedSymbol, onSymbolChange }) => {
               ))}
             </select>
             
-            <div className="text-sm text-gray-600 dark:text-gray-400 flex items-center">
+            <div className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 flex items-center justify-center sm:justify-start col-span-1 sm:col-span-2 lg:col-span-1">
               {filteredArticles.length} {t('articles')}
             </div>
           </div>
@@ -463,15 +473,15 @@ const NewsSentimentUI = ({ selectedSymbol, onSymbolChange }) => {
       <SentimentSummary articles={filteredArticles} />
 
       {/* News Articles */}
-      <div className="space-y-4">
+      <div className="space-y-3 sm:space-y-4">
         {loading ? (
-          <div className="flex items-center justify-center py-12">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
+          <div className="flex items-center justify-center py-8 sm:py-12">
+            <div className="animate-spin rounded-full h-8 w-8 sm:h-12 sm:w-12 border-b-2 border-blue-500"></div>
           </div>
         ) : filteredArticles.length === 0 ? (
-          <div className="text-center py-12 text-gray-500 dark:text-gray-400">
-            <p className="text-lg">{t('noNewsFound')}</p>
-            <p className="text-sm mt-2">{t('tryDifferentFilters')}</p>
+          <div className="text-center py-8 sm:py-12 text-gray-500 dark:text-gray-400 px-4">
+            <p className="text-base sm:text-lg">{t('noNewsFound')}</p>
+            <p className="text-xs sm:text-sm mt-2">{t('tryDifferentFilters')}</p>
           </div>
         ) : (
           filteredArticles.map((article, index) => (
