@@ -1,0 +1,156 @@
+# Coverage configuration for Stock Prediction API
+
+[run]
+# Source code directories to measure
+source = .
+
+# Files to include in coverage
+include = 
+    api/*
+    core/*
+    models/*
+    services/*
+    utils/*
+    main.py
+
+# Files and directories to exclude
+omit = 
+    */tests/*
+    */test_*
+    */__pycache__/*
+    */venv/*
+    */env/*
+    */.venv/*
+    */migrations/*
+    */alembic/*
+    setup.py
+    conftest.py
+    */conftest.py
+    */.pytest_cache/*
+    */node_modules/*
+    */static/*
+    */templates/*
+    */locale/*
+    */media/*
+    */logs/*
+    */data/*
+    */models/saved_models/*
+    */scripts/data_collection.py
+    */scripts/model_training.py
+
+# Branch coverage
+branch = True
+
+# Parallel processing
+parallel = True
+
+# Data file location
+data_file = .coverage
+
+# Plugins
+plugins = 
+    coverage_conditional_plugin
+
+[report]
+# Reporting options
+show_missing = True
+skip_covered = False
+skip_empty = True
+sort = Cover
+
+# Precision for coverage percentages
+precision = 2
+
+# Exclude lines from coverage
+exclude_lines =
+    # Have to re-enable the standard pragma
+    pragma: no cover
+    
+    # Don't complain about missing debug-only code:
+    def __repr__
+    if self\.debug
+    
+    # Don't complain if tests don't hit defensive assertion code:
+    raise AssertionError
+    raise NotImplementedError
+    
+    # Don't complain if non-runnable code isn't run:
+    if 0:
+    if False:
+    if __name__ == .__main__.:
+    
+    # Don't complain about abstract methods
+    @(abc\.)?abstractmethod
+    
+    # Don't complain about type checking imports
+    if TYPE_CHECKING:
+    
+    # Don't complain about platform specific code
+    if sys.platform
+    
+    # Don't complain about deprecated code
+    @deprecated
+    
+    # Don't complain about logging statements
+    logger\.
+    
+    # Don't complain about pass statements
+    pass
+    
+    # Don't complain about ellipsis
+    \.\.\.
+
+# Partial branches to exclude
+partial_branches =
+    pragma: no branch
+    if TYPE_CHECKING:
+    if sys.platform
+
+# Minimum coverage percentage
+fail_under = 75
+
+[html]
+# HTML report settings
+directory = tests/reports/coverage_html
+title = Stock Prediction API Coverage Report
+show_contexts = True
+skip_covered = False
+skip_empty = True
+
+# Extra CSS
+extra_css = 
+
+[xml]
+# XML report settings
+output = tests/reports/coverage.xml
+
+[json]
+# JSON report settings
+output = tests/reports/coverage.json
+show_contexts = True
+pretty_print = True
+
+[lcov]
+# LCOV report settings (for integration with other tools)
+output = tests/reports/coverage.lcov
+
+# Paths mapping for different environments
+[paths]
+source =
+    .
+    /app
+    C:\Users\*\*\TRAE_STOCK\backend
+    /home/*/TRAE_STOCK/backend
+    /workspace/backend
+
+# Coverage contexts (for advanced reporting)
+[coverage:contexts]
+# Define contexts for different test types
+unit_tests = tests/test_*.py
+integration_tests = tests/test_integration.py
+api_tests = tests/test_api.py
+ml_tests = tests/test_ml_models.py
+
+# Tool-specific settings
+[tool:coverage]
+# Additional tool settings can go here
