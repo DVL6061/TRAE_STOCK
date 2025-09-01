@@ -86,30 +86,30 @@ const Header = ({ onMenuClick, sidebarOpen }) => {
   };
 
   return (
-    <header className="bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700">
-      <div className="px-3 sm:px-4 lg:px-8">
+    <header className="bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700 sticky top-0 z-50">
+      <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-8">
         <div className="flex h-14 sm:h-16 items-center justify-between">
           {/* Left side - Menu button and Logo */}
           <div className="flex items-center gap-2 sm:gap-4">
             <button
               type="button"
               onClick={onMenuClick}
-              className="rounded-md p-1.5 sm:p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:hover:bg-gray-700 dark:hover:text-gray-300"
+              className="lg:hidden rounded-md p-1.5 sm:p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:hover:bg-gray-700 dark:hover:text-gray-300"
               aria-label="Toggle sidebar"
             >
               <Bars3Icon className="h-5 w-5 sm:h-6 sm:w-6" />
             </button>
             
             {/* Logo and title */}
-            <div className="flex items-center gap-2 sm:gap-3">
-              <div className="h-7 w-7 sm:h-8 sm:w-8 rounded-lg bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
+            <div className="flex items-center gap-1.5 sm:gap-2">
+              <div className="h-6 w-6 sm:h-7 sm:w-7 lg:h-8 lg:w-8 rounded-lg bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
                 <span className="text-white font-bold text-xs sm:text-sm">AI</span>
               </div>
-              <div className="hidden md:block">
-                <h1 className="text-lg sm:text-xl font-bold text-gray-900 dark:text-white">
+              <div className="hidden xs:block">
+                <h1 className="text-sm sm:text-lg lg:text-xl font-bold text-gray-900 dark:text-white">
                   {t('app.title')}
                 </h1>
-                <p className="text-xs text-gray-500 dark:text-gray-400">
+                <p className="text-xs text-gray-500 dark:text-gray-400 hidden sm:block">
                   {t('app.subtitle')}
                 </p>
               </div>
@@ -117,7 +117,7 @@ const Header = ({ onMenuClick, sidebarOpen }) => {
           </div>
 
           {/* Center - Search */}
-          <div className="flex-1 max-w-xs sm:max-w-lg mx-2 sm:mx-4">
+          <div className="flex-1 max-w-xs sm:max-w-lg mx-2 sm:mx-4 lg:mx-8">
             <form onSubmit={handleSearch} className="relative">
               <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-2 sm:pl-3">
                 <MagnifyingGlassIcon className="h-4 w-4 sm:h-5 sm:w-5 text-gray-400" />
@@ -126,16 +126,16 @@ const Header = ({ onMenuClick, sidebarOpen }) => {
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="block w-full rounded-lg border border-gray-300 bg-white py-1.5 sm:py-2 pl-8 sm:pl-10 pr-2 sm:pr-3 text-xs sm:text-sm placeholder-gray-500 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:placeholder-gray-400"
+                className="block w-full rounded-lg border border-gray-300 bg-white py-1.5 sm:py-2 pl-7 sm:pl-10 pr-2 sm:pr-3 text-xs sm:text-sm placeholder-gray-500 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:placeholder-gray-400"
                 placeholder={t('predictions.searchStock')}
               />
             </form>
           </div>
 
           {/* Right side - Actions */}
-          <div className="flex items-center gap-1 sm:gap-2">
+          <div className="flex items-center gap-1 sm:gap-2 lg:gap-4">
             {/* Language Switcher */}
-            <div className="hidden sm:block">
+            <div className="hidden md:block">
               <LanguageSwitcher variant="compact" showLabel={false} />
             </div>
 
@@ -151,6 +151,7 @@ const Header = ({ onMenuClick, sidebarOpen }) => {
                 }}
                 className="rounded-lg p-1.5 sm:p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:hover:bg-gray-700 dark:hover:text-gray-300"
                 aria-label={t('settings.theme')}
+                title={`Current theme: ${theme}`}
               >
                 {theme === 'light' && <SunIcon className="h-4 w-4 sm:h-5 sm:w-5" />}
                 {theme === 'dark' && <MoonIcon className="h-4 w-4 sm:h-5 sm:w-5" />}
@@ -184,7 +185,7 @@ const Header = ({ onMenuClick, sidebarOpen }) => {
                   <div className="absolute right-0 z-20 mt-2 w-72 sm:w-80 rounded-lg bg-white shadow-lg ring-1 ring-black ring-opacity-5 dark:bg-gray-800 dark:ring-gray-600">
                     <div className="p-3 sm:p-4 border-b border-gray-200 dark:border-gray-700">
                       <h3 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white">
-                        {t('settings.notifications')}
+                        {t('settings.notifications')} ({unreadCount})
                       </h3>
                     </div>
                     <div className="max-h-80 sm:max-h-96 overflow-y-auto">
@@ -224,6 +225,19 @@ const Header = ({ onMenuClick, sidebarOpen }) => {
                         </div>
                       )}
                     </div>
+                    {notifications.length > 0 && (
+                      <div className="px-3 sm:px-4 py-2 border-t border-gray-200 dark:border-gray-700">
+                        <button
+                          onClick={() => {
+                            // Mark all as read functionality
+                            setShowNotifications(false);
+                          }}
+                          className="text-xs sm:text-sm text-blue-600 hover:text-blue-500 dark:text-blue-400 dark:hover:text-blue-300"
+                        >
+                          {t('notifications.markAllRead')}
+                        </button>
+                      </div>
+                    )}
                   </div>
                 </>
               )}

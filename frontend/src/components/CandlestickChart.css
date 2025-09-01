@@ -1,0 +1,321 @@
+.candlestick-chart-container {
+  width: 100%;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  padding: 16px;
+  margin-bottom: 16px;
+}
+
+.chart-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-bottom: 16px;
+  padding: 12px;
+  background: #f8f9fa;
+  border-radius: 6px;
+  border: 1px solid #e9ecef;
+}
+
+.timeframe-selector {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.timeframe-selector label {
+  font-weight: 500;
+  color: #495057;
+  font-size: 14px;
+}
+
+.timeframe-select {
+  padding: 6px 12px;
+  border: 1px solid #ced4da;
+  border-radius: 4px;
+  background: white;
+  font-size: 14px;
+  color: #495057;
+  cursor: pointer;
+  transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+}
+
+.timeframe-select:focus {
+  outline: none;
+  border-color: #007bff;
+  box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
+}
+
+.indicator-toggles {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.indicator-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.indicator-group h4 {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: #343a40;
+  border-bottom: 1px solid #dee2e6;
+  padding-bottom: 4px;
+}
+
+.indicator-group .toggle-btn {
+  margin-right: 8px;
+  margin-bottom: 4px;
+}
+
+.toggle-btn {
+  padding: 6px 12px;
+  border: 1px solid #ced4da;
+  border-radius: 4px;
+  background: white;
+  color: #495057;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s ease-in-out;
+  white-space: nowrap;
+}
+
+.toggle-btn:hover {
+  background: #e9ecef;
+  border-color: #adb5bd;
+}
+
+.toggle-btn.active {
+  background: #007bff;
+  border-color: #007bff;
+  color: white;
+}
+
+.toggle-btn.active:hover {
+  background: #0056b3;
+  border-color: #0056b3;
+}
+
+.indicator-settings {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  padding: 12px;
+  background: #ffffff;
+  border: 1px solid #dee2e6;
+  border-radius: 6px;
+  margin-top: 8px;
+}
+
+.setting-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 200px;
+}
+
+.setting-group h5 {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 600;
+  color: #495057;
+  border-bottom: 1px solid #e9ecef;
+  padding-bottom: 4px;
+}
+
+.setting-control {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.setting-control label {
+  font-size: 12px;
+  color: #6c757d;
+  min-width: 80px;
+  font-weight: 500;
+}
+
+.setting-control input {
+  padding: 4px 8px;
+  border: 1px solid #ced4da;
+  border-radius: 3px;
+  font-size: 12px;
+  width: 80px;
+  background: white;
+  color: #495057;
+}
+
+.setting-control input:focus {
+  outline: none;
+  border-color: #007bff;
+  box-shadow: 0 0 0 1px rgba(0, 123, 255, 0.25);
+}
+
+.chart-wrapper {
+  position: relative;
+  width: 100%;
+  background: white;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.chart-wrapper canvas {
+  display: block;
+  width: 100% !important;
+  height: 100% !important;
+}
+
+/* Dark mode styles */
+.dark .candlestick-chart-container {
+  background: #1f2937;
+  color: #f9fafb;
+}
+
+.dark .chart-controls {
+  background: #374151;
+  border-color: #4b5563;
+}
+
+.dark .timeframe-selector label {
+  color: #d1d5db;
+}
+
+.dark .timeframe-select {
+  background: #374151;
+  border-color: #4b5563;
+  color: #d1d5db;
+}
+
+.dark .timeframe-select:focus {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.25);
+}
+
+.dark .indicator-group h4 {
+  color: #f3f4f6;
+  border-color: #4b5563;
+}
+
+.dark .toggle-btn {
+  background: #374151;
+  border-color: #4b5563;
+  color: #d1d5db;
+}
+
+.dark .toggle-btn:hover {
+  background: #4b5563;
+  border-color: #6b7280;
+}
+
+.dark .toggle-btn.active {
+  background: #3b82f6;
+  border-color: #3b82f6;
+  color: white;
+}
+
+.dark .toggle-btn.active:hover {
+  background: #2563eb;
+  border-color: #2563eb;
+}
+
+.dark .indicator-settings {
+  background: #374151;
+  border-color: #4b5563;
+}
+
+.dark .setting-group h5 {
+  color: #f3f4f6;
+  border-color: #4b5563;
+}
+
+.dark .setting-control label {
+  color: #9ca3af;
+}
+
+.dark .setting-control input {
+  background: #4b5563;
+  border-color: #6b7280;
+  color: #f3f4f6;
+}
+
+.dark .setting-control input:focus {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 1px rgba(59, 130, 246, 0.25);
+}
+
+.dark .chart-wrapper {
+  background: #374151;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .chart-controls {
+    padding: 8px;
+  }
+  
+  .indicator-toggles {
+    gap: 8px;
+  }
+  
+  .indicator-group {
+    min-width: 100%;
+  }
+  
+  .toggle-btn {
+    padding: 4px 8px;
+    font-size: 11px;
+  }
+  
+  .indicator-settings {
+    flex-direction: column;
+    gap: 12px;
+  }
+  
+  .setting-group {
+    min-width: 100%;
+  }
+  
+  .setting-control {
+    flex-wrap: wrap;
+  }
+  
+  .setting-control label {
+    min-width: 60px;
+  }
+  
+  .setting-control input {
+    width: 60px;
+  }
+}
+
+@media (max-width: 480px) {
+  .candlestick-chart-container {
+    padding: 8px;
+  }
+  
+  .timeframe-selector {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+  }
+  
+  .timeframe-select {
+    width: 100%;
+  }
+  
+  .indicator-group {
+    gap: 4px;
+  }
+  
+  .toggle-btn {
+    padding: 3px 6px;
+    font-size: 10px;
+  }
+}

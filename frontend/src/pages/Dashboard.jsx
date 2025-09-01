@@ -139,28 +139,28 @@ const Dashboard = () => {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+          <h1 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">
             {t('dashboard.title')}
           </h1>
-          <p className="text-gray-600 dark:text-gray-400">
+          <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400">
             {t('dashboard.subtitle')}
           </p>
         </div>
         
-        <div className="flex items-center gap-3">
-          <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
-            <div className="h-2 w-2 rounded-full bg-green-500 animate-pulse" />
+        <div className="flex items-center gap-2 sm:gap-3 w-full sm:w-auto">
+          <div className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm text-gray-600 dark:text-gray-400">
+            <div className="h-1.5 w-1.5 sm:h-2 sm:w-2 rounded-full bg-green-500 animate-pulse" />
             <span>{t('dashboard.liveData')}</span>
           </div>
           
           <select 
             value={selectedTimeframe}
             onChange={(e) => setSelectedTimeframe(e.target.value)}
-            className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="ml-auto sm:ml-0 px-2 sm:px-3 py-1 sm:py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-xs sm:text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
           >
             <option value="1D">{t('timeframes.1d')}</option>
             <option value="1W">{t('timeframes.1w')}</option>
@@ -171,36 +171,36 @@ const Dashboard = () => {
       </div>
 
       {/* Market Overview Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-6">
         {marketData && Object.entries(marketData).map(([key, data]) => (
-          <div key={key} className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-white uppercase">
+          <div key={key} className="bg-white dark:bg-gray-800 rounded-lg sm:rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-4 sm:p-6">
+            <div className="flex items-center justify-between mb-3 sm:mb-4">
+              <h3 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white uppercase">
                 {key === 'nifty' ? 'NIFTY 50' : key === 'sensex' ? 'SENSEX' : 'BANK NIFTY'}
               </h3>
-              <div className={`p-2 rounded-lg ${
+              <div className={`p-1.5 sm:p-2 rounded-lg ${
                 data.change >= 0 ? 'bg-green-100 dark:bg-green-900/20' : 'bg-red-100 dark:bg-red-900/20'
               }`}>
                 {data.change >= 0 ? (
-                  <TrendingUpIcon className="h-5 w-5 text-green-600 dark:text-green-400" />
+                  <TrendingUpIcon className="h-4 w-4 sm:h-5 sm:w-5 text-green-600 dark:text-green-400" />
                 ) : (
-                  <TrendingDownIcon className="h-5 w-5 text-red-600 dark:text-red-400" />
+                  <TrendingDownIcon className="h-4 w-4 sm:h-5 sm:w-5 text-red-600 dark:text-red-400" />
                 )}
               </div>
             </div>
             
-            <div className="space-y-2">
-              <div className="text-2xl font-bold text-gray-900 dark:text-white">
+            <div className="space-y-1 sm:space-y-2">
+              <div className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">
                 {formatNumber(data.value)}
               </div>
               
-              <div className="flex items-center gap-2">
-                <span className={`text-sm font-medium ${
+              <div className="flex items-center gap-1 sm:gap-2">
+                <span className={`text-xs sm:text-sm font-medium ${
                   data.change >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'
                 }`}>
                   {data.change >= 0 ? '+' : ''}{formatNumber(data.change)}
                 </span>
-                <span className={`text-sm ${
+                <span className={`text-xs sm:text-sm ${
                   data.change >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'
                 }`}>
                   ({data.changePercent >= 0 ? '+' : ''}{data.changePercent}%)
@@ -216,22 +216,22 @@ const Dashboard = () => {
       </div>
 
       {/* Main Content Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
         {/* Chart Section */}
-        <div className="lg:col-span-2 space-y-6">
+        <div className="lg:col-span-2 space-y-4 sm:space-y-6">
           {/* Price Chart */}
-          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
-            <div className="flex items-center justify-between mb-6">
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+          <div className="bg-white dark:bg-gray-800 rounded-lg sm:rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-4 sm:p-6">
+            <div className="flex items-center justify-between mb-4 sm:mb-6">
+              <h3 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white">
                 {t('dashboard.priceChart')}
               </h3>
-              <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
-                <ClockIcon className="h-4 w-4" />
+              <div className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm text-gray-600 dark:text-gray-400">
+                <ClockIcon className="h-3 w-3 sm:h-4 sm:w-4" />
                 <span>{t('dashboard.realTime')}</span>
               </div>
             </div>
             
-            <div className="h-80">
+            <div className="h-60 sm:h-80">
               <ResponsiveContainer width="100%" height="100%">
                 <AreaChart data={chartData}>
                   <CartesianGrid strokeDasharray="3 3" className="opacity-30" />
@@ -266,25 +266,25 @@ const Dashboard = () => {
           </div>
 
           {/* AI Predictions */}
-          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
-            <div className="flex items-center gap-3 mb-6">
-              <CpuChipIcon className="h-6 w-6 text-purple-600" />
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+          <div className="bg-white dark:bg-gray-800 rounded-lg sm:rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-4 sm:p-6">
+            <div className="flex items-center gap-2 sm:gap-3 mb-4 sm:mb-6">
+              <CpuChipIcon className="h-5 w-5 sm:h-6 sm:w-6 text-purple-600" />
+              <h3 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white">
                 {t('dashboard.aiPredictions')}
               </h3>
             </div>
             
             {predictions && (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
                 {/* XGBoost */}
-                <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
-                  <div className="flex items-center gap-2 mb-2">
-                    <ChartBarIcon className="h-4 w-4 text-blue-600" />
-                    <span className="text-sm font-medium text-blue-900 dark:text-blue-300">
+                <div className="p-3 sm:p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+                  <div className="flex items-center gap-1.5 sm:gap-2 mb-1.5 sm:mb-2">
+                    <ChartBarIcon className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-blue-600" />
+                    <span className="text-xs sm:text-sm font-medium text-blue-900 dark:text-blue-300">
                       XGBoost
                     </span>
                   </div>
-                  <div className={`text-lg font-bold ${
+                  <div className={`text-base sm:text-lg font-bold ${
                     predictions.xgboost.signal === 'BUY' ? 'text-green-600' : 
                     predictions.xgboost.signal === 'SELL' ? 'text-red-600' : 'text-yellow-600'
                   }`}>
@@ -296,33 +296,33 @@ const Dashboard = () => {
                 </div>
 
                 {/* Informer */}
-                <div className="p-4 bg-green-50 dark:bg-green-900/20 rounded-lg">
-                  <div className="flex items-center gap-2 mb-2">
-                    <BoltIcon className="h-4 w-4 text-green-600" />
-                    <span className="text-sm font-medium text-green-900 dark:text-green-300">
+                <div className="p-3 sm:p-4 bg-green-50 dark:bg-green-900/20 rounded-lg">
+                  <div className="flex items-center gap-1.5 sm:gap-2 mb-1.5 sm:mb-2">
+                    <BoltIcon className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-green-600" />
+                    <span className="text-xs sm:text-sm font-medium text-green-900 dark:text-green-300">
                       Informer
                     </span>
                   </div>
-                  <div className={`text-lg font-bold ${
+                  <div className={`text-base sm:text-lg font-bold ${
                     predictions.informer.signal === 'BUY' ? 'text-green-600' : 
                     predictions.informer.signal === 'SELL' ? 'text-red-600' : 'text-yellow-600'
                   }`}>
                     {t(`signals.${predictions.informer.signal.toLowerCase()}`)}
                   </div>
                   <div className="text-xs text-gray-600 dark:text-gray-400">
-                    {t('dashboard.confidence')}: {(predictions.informer.confidence * 100).toFixed(0)}%
+                    {t('dashboard.targetPrice')}: {formatCurrency(predictions.informer.targetPrice)}
                   </div>
                 </div>
 
                 {/* DQN */}
-                <div className="p-4 bg-purple-50 dark:bg-purple-900/20 rounded-lg">
-                  <div className="flex items-center gap-2 mb-2">
-                    <CpuChipIcon className="h-4 w-4 text-purple-600" />
-                    <span className="text-sm font-medium text-purple-900 dark:text-purple-300">
+                <div className="p-3 sm:p-4 bg-purple-50 dark:bg-purple-900/20 rounded-lg">
+                  <div className="flex items-center gap-1.5 sm:gap-2 mb-1.5 sm:mb-2">
+                    <CpuChipIcon className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-purple-600" />
+                    <span className="text-xs sm:text-sm font-medium text-purple-900 dark:text-purple-300">
                       DQN
                     </span>
                   </div>
-                  <div className={`text-lg font-bold ${
+                  <div className={`text-base sm:text-lg font-bold ${
                     predictions.dqn.signal === 'BUY' ? 'text-green-600' : 
                     predictions.dqn.signal === 'SELL' ? 'text-red-600' : 'text-yellow-600'
                   }`}>
@@ -334,14 +334,14 @@ const Dashboard = () => {
                 </div>
 
                 {/* Sentiment */}
-                <div className="p-4 bg-orange-50 dark:bg-orange-900/20 rounded-lg">
-                  <div className="flex items-center gap-2 mb-2">
-                    <GlobeAltIcon className="h-4 w-4 text-orange-600" />
-                    <span className="text-sm font-medium text-orange-900 dark:text-orange-300">
+                <div className="p-3 sm:p-4 bg-orange-50 dark:bg-orange-900/20 rounded-lg">
+                  <div className="flex items-center gap-1.5 sm:gap-2 mb-1.5 sm:mb-2">
+                    <GlobeAltIcon className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-orange-600" />
+                    <span className="text-xs sm:text-sm font-medium text-orange-900 dark:text-orange-300">
                       {t('dashboard.sentiment')}
                     </span>
                   </div>
-                  <div className={`text-lg font-bold ${
+                  <div className={`text-base sm:text-lg font-bold ${
                     predictions.sentiment.label === 'POSITIVE' ? 'text-green-600' : 
                     predictions.sentiment.label === 'NEGATIVE' ? 'text-red-600' : 'text-yellow-600'
                   }`}>
@@ -357,26 +357,26 @@ const Dashboard = () => {
         </div>
 
         {/* Sidebar */}
-        <div className="space-y-6">
+        <div className="space-y-4 sm:space-y-6">
           {/* Portfolio Summary */}
           {portfolioData && (
-            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+            <div className="bg-white dark:bg-gray-800 rounded-lg sm:rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-4 sm:p-6">
+              <h3 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white mb-3 sm:mb-4">
                 {t('dashboard.portfolio')}
               </h3>
               
-              <div className="space-y-4">
+              <div className="space-y-3 sm:space-y-4">
                 <div>
-                  <div className="text-2xl font-bold text-gray-900 dark:text-white">
+                  <div className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">
                     {formatCurrency(portfolioData.totalValue)}
                   </div>
-                  <div className="flex items-center gap-2 mt-1">
-                    <span className={`text-sm font-medium ${
+                  <div className="flex items-center gap-1 sm:gap-2 mt-1">
+                    <span className={`text-xs sm:text-sm font-medium ${
                       portfolioData.dayChange >= 0 ? 'text-green-600' : 'text-red-600'
                     }`}>
                       {portfolioData.dayChange >= 0 ? '+' : ''}{formatCurrency(portfolioData.dayChange)}
                     </span>
-                    <span className={`text-sm ${
+                    <span className={`text-xs sm:text-sm ${
                       portfolioData.dayChange >= 0 ? 'text-green-600' : 'text-red-600'
                     }`}>
                       ({portfolioData.dayChangePercent >= 0 ? '+' : ''}{portfolioData.dayChangePercent}%)
@@ -384,17 +384,17 @@ const Dashboard = () => {
                   </div>
                 </div>
                 
-                <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
-                  <div className="text-sm text-gray-600 dark:text-gray-400 mb-1">
+                <div className="pt-3 sm:pt-4 border-t border-gray-200 dark:border-gray-700">
+                  <div className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 mb-1">
                     {t('dashboard.totalReturn')}
                   </div>
-                  <div className="flex items-center gap-2">
-                    <span className={`font-medium ${
+                  <div className="flex items-center gap-1 sm:gap-2">
+                    <span className={`text-xs sm:text-sm font-medium ${
                       portfolioData.totalReturn >= 0 ? 'text-green-600' : 'text-red-600'
                     }`}>
                       {portfolioData.totalReturn >= 0 ? '+' : ''}{formatCurrency(portfolioData.totalReturn)}
                     </span>
-                    <span className={`text-sm ${
+                    <span className={`text-xs sm:text-sm ${
                       portfolioData.totalReturn >= 0 ? 'text-green-600' : 'text-red-600'
                     }`}>
                       ({portfolioData.totalReturnPercent >= 0 ? '+' : ''}{portfolioData.totalReturnPercent}%)
@@ -406,12 +406,12 @@ const Dashboard = () => {
           )}
 
           {/* Sector Allocation */}
-          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+          <div className="bg-white dark:bg-gray-800 rounded-lg sm:rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-4 sm:p-6">
+            <h3 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white mb-3 sm:mb-4">
               {t('dashboard.sectorAllocation')}
             </h3>
             
-            <div className="h-48">
+            <div className="h-40 sm:h-48">
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
                   <Pie
@@ -432,12 +432,12 @@ const Dashboard = () => {
               </ResponsiveContainer>
             </div>
             
-            <div className="space-y-2 mt-4">
+            <div className="space-y-1.5 sm:space-y-2 mt-3 sm:mt-4">
               {sectorData.map((sector) => (
-                <div key={sector.name} className="flex items-center justify-between text-sm">
-                  <div className="flex items-center gap-2">
+                <div key={sector.name} className="flex items-center justify-between text-xs sm:text-sm">
+                  <div className="flex items-center gap-1.5 sm:gap-2">
                     <div 
-                      className="w-3 h-3 rounded-full" 
+                      className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full" 
                       style={{ backgroundColor: sector.color }}
                     />
                     <span className="text-gray-700 dark:text-gray-300">{sector.name}</span>
@@ -451,29 +451,29 @@ const Dashboard = () => {
           </div>
 
           {/* Quick Actions */}
-          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+          <div className="bg-white dark:bg-gray-800 rounded-lg sm:rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-4 sm:p-6">
+            <h3 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white mb-3 sm:mb-4">
               {t('dashboard.quickActions')}
             </h3>
             
-            <div className="space-y-3">
-              <button className="w-full flex items-center gap-3 p-3 text-left bg-blue-50 dark:bg-blue-900/20 rounded-lg hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-colors">
-                <TrendingUpIcon className="h-5 w-5 text-blue-600" />
-                <span className="text-blue-900 dark:text-blue-300 font-medium">
+            <div className="space-y-2 sm:space-y-3">
+              <button className="w-full flex items-center gap-2 sm:gap-3 p-2.5 sm:p-3 text-left bg-blue-50 dark:bg-blue-900/20 rounded-lg hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-colors">
+                <TrendingUpIcon className="h-4 w-4 sm:h-5 sm:w-5 text-blue-600" />
+                <span className="text-xs sm:text-sm text-blue-900 dark:text-blue-300 font-medium">
                   {t('dashboard.viewPredictions')}
                 </span>
               </button>
               
-              <button className="w-full flex items-center gap-3 p-3 text-left bg-green-50 dark:bg-green-900/20 rounded-lg hover:bg-green-100 dark:hover:bg-green-900/30 transition-colors">
-                <EyeIcon className="h-5 w-5 text-green-600" />
-                <span className="text-green-900 dark:text-green-300 font-medium">
+              <button className="w-full flex items-center gap-2 sm:gap-3 p-2.5 sm:p-3 text-left bg-green-50 dark:bg-green-900/20 rounded-lg hover:bg-green-100 dark:hover:bg-green-900/30 transition-colors">
+                <EyeIcon className="h-4 w-4 sm:h-5 sm:w-5 text-green-600" />
+                <span className="text-xs sm:text-sm text-green-900 dark:text-green-300 font-medium">
                   {t('dashboard.manageWatchlist')}
                 </span>
               </button>
               
-              <button className="w-full flex items-center gap-3 p-3 text-left bg-purple-50 dark:bg-purple-900/20 rounded-lg hover:bg-purple-100 dark:hover:bg-purple-900/30 transition-colors">
-                <ChartBarIcon className="h-5 w-5 text-purple-600" />
-                <span className="text-purple-900 dark:text-purple-300 font-medium">
+              <button className="w-full flex items-center gap-2 sm:gap-3 p-2.5 sm:p-3 text-left bg-purple-50 dark:bg-purple-900/20 rounded-lg hover:bg-purple-100 dark:hover:bg-purple-900/30 transition-colors">
+                <ChartBarIcon className="h-4 w-4 sm:h-5 sm:w-5 text-purple-600" />
+                <span className="text-xs sm:text-sm text-purple-900 dark:text-purple-300 font-medium">
                   {t('dashboard.technicalAnalysis')}
                 </span>
               </button>
