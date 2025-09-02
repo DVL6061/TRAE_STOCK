@@ -2,7 +2,7 @@ import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { BrowserRouter } from 'react-router-dom';
 import { ThemeProvider } from '../../contexts/ThemeContext';
-import PredictionPage from '../../pages/PredictionPage';
+import PredictionPage from '../../pages/PredictionPage.js';
 import { useTranslation } from 'react-i18next';
 import axios from 'axios';
 

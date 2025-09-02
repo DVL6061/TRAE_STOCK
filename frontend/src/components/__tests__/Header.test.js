@@ -2,7 +2,7 @@ import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { BrowserRouter } from 'react-router-dom';
 import { ThemeProvider } from '../../contexts/ThemeContext';
-import Header from '../layout/Header';
+import Header from '../layout/Header.jsx';
 import { useTranslation } from 'react-i18next';
 
 // Mock react-i18next

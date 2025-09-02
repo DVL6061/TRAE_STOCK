@@ -2,7 +2,7 @@ import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { BrowserRouter } from 'react-router-dom';
 import { ThemeProvider } from '../../contexts/ThemeContext';
-import Dashboard from '../../pages/Dashboard';
+import Dashboard from '../../pages/Dashboard.jsx';
 import axios from 'axios';
 
 // Mock axios

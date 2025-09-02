@@ -2,7 +2,7 @@ import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { BrowserRouter, MemoryRouter } from 'react-router-dom';
 import { ThemeProvider } from '../../contexts/ThemeContext';
-import Sidebar from '../layout/Sidebar';
+import Sidebar from '../layout/Sidebar.jsx';
 import { useTranslation } from 'react-i18next';
 
 // Mock react-i18next
