@@ -1,0 +1,73 @@
+# Grafana Datasource Configuration for Prometheus
+apiVersion: 1
+
+datasources:
+  # Main Prometheus datasource
+  - name: Prometheus
+    type: prometheus
+    access: proxy
+    url: http://prometheus:9090
+    isDefault: true
+    editable: true
+    jsonData:
+      httpMethod: POST
+      manageAlerts: true
+      prometheusType: Prometheus
+      prometheusVersion: 2.40.0
+      cacheLevel: 'High'
+      disableRecordingRules: false
+      incrementalQueryOverlapWindow: 10m
+      queryTimeout: 60s
+      timeInterval: 15s
+      exemplarTraceIdDestinations:
+        - name: trace_id
+          datasourceUid: jaeger
+    secureJsonData: {}
+    uid: prometheus-uid
+    version: 1
+
+  # CloudWatch datasource (if needed)
+  - name: CloudWatch
+    type: cloudwatch
+    access: proxy
+    jsonData:
+      authType: default
+      defaultRegion: us-east-1
+      customMetricsNamespaces: 'AWS/EC2,AWS/RDS,AWS/ELB,AWS/ApplicationELB,CWAgent'
+      assumeRoleArn: ''
+    uid: cloudwatch-uid
+    version: 1
+    editable: true
+
+  # Loki for logs (if implemented)
+  - name: Loki
+    type: loki
+    access: proxy
+    url: http://loki:3100
+    jsonData:
+      maxLines: 1000
+      derivedFields:
+        - datasourceUid: jaeger
+          matcherRegex: "trace_id=(\\w+)"
+          name: TraceID
+          url: '$${__value.raw}'
+    uid: loki-uid
+    version: 1
+    editable: true
+
+  # Jaeger for distributed tracing (if implemented)
+  - name: Jaeger
+    type: jaeger
+    access: proxy
+    url: http://jaeger:16686
+    uid: jaeger-uid
+    version: 1
+    editable: true
+
+  # TestData datasource for testing
+  - name: TestData
+    type: testdata
+    access: proxy
+    uid: testdata-uid
+    version: 1
+    editable: true
