@@ -1,0 +1,298 @@
+version: '3.8'
+
+services:
+  # Backend service for testing
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+      target: development
+    container_name: stock_backend_test
+    environment:
+      - ENVIRONMENT=test
+      - DATABASE_URL=postgresql://test_user:test_password@postgres_test:5432/test_db
+      - REDIS_URL=redis://redis_test:6379/0
+      - JWT_SECRET_KEY=test_jwt_secret_key_for_testing_only
+      - ALPHA_VANTAGE_API_KEY=test_alpha_vantage_key
+      - ANGEL_ONE_API_KEY=test_angel_one_key
+      - ANGEL_ONE_CLIENT_ID=test_client_id
+      - ANGEL_ONE_PASSWORD=test_password
+      - ANGEL_ONE_TOTP_SECRET=test_totp_secret
+      - CORS_ORIGINS=http://localhost:3000,http://frontend_test:3000
+      - LOG_LEVEL=DEBUG
+      - PYTHONPATH=/app
+    ports:
+      - "8001:8000"
+    volumes:
+      - ./backend:/app
+      - ./backend/tests:/app/tests
+    depends_on:
+      postgres_test:
+        condition: service_healthy
+      redis_test:
+        condition: service_healthy
+    networks:
+      - test_network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    command: >
+      sh -c "alembic upgrade head &&
+             python -m pytest tests/unit/ -v --tb=short &&
+             uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload"
+
+  # Frontend service for testing
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      target: development
+    container_name: stock_frontend_test
+    environment:
+      - NODE_ENV=test
+      - REACT_APP_API_URL=http://backend:8000/api
+      - REACT_APP_WS_URL=ws://backend:8000/ws
+      - REACT_APP_ENVIRONMENT=test
+      - CI=true
+    ports:
+      - "3001:3000"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    depends_on:
+      - backend
+    networks:
+      - test_network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    command: >
+      sh -c "npm run test:unit &&
+             npm start"
+
+  # Test database
+  postgres_test:
+    image: postgres:15-alpine
+    container_name: stock_postgres_test
+    environment:
+      - POSTGRES_DB=test_db
+      - POSTGRES_USER=test_user
+      - POSTGRES_PASSWORD=test_password
+      - POSTGRES_INITDB_ARGS=--auth-host=scram-sha-256
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_test_data:/var/lib/postgresql/data
+      - ./backend/sql/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    networks:
+      - test_network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U test_user -d test_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    command: >
+      postgres -c log_statement=all
+               -c log_destination=stderr
+               -c log_min_duration_statement=0
+               -c shared_preload_libraries=pg_stat_statements
+
+  # Test Redis
+  redis_test:
+    image: redis:7-alpine
+    container_name: stock_redis_test
+    ports:
+      - "6380:6379"
+    volumes:
+      - redis_test_data:/data
+    networks:
+      - test_network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    command: >
+      redis-server --appendonly yes
+                   --maxmemory 256mb
+                   --maxmemory-policy allkeys-lru
+
+  # Test runner for integration tests
+  test_runner:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+      target: development
+    container_name: stock_test_runner
+    environment:
+      - ENVIRONMENT=test
+      - DATABASE_URL=postgresql://test_user:test_password@postgres_test:5432/test_db
+      - REDIS_URL=redis://redis_test:6379/0
+      - JWT_SECRET_KEY=test_jwt_secret_key_for_testing_only
+      - ALPHA_VANTAGE_API_KEY=test_alpha_vantage_key
+      - ANGEL_ONE_API_KEY=test_angel_one_key
+      - ANGEL_ONE_CLIENT_ID=test_client_id
+      - ANGEL_ONE_PASSWORD=test_password
+      - ANGEL_ONE_TOTP_SECRET=test_totp_secret
+      - BACKEND_URL=http://backend:8000
+      - FRONTEND_URL=http://frontend_test:3000
+      - PYTHONPATH=/app
+    volumes:
+      - ./backend:/app
+      - ./tests:/app/tests
+      - ./test-results:/app/test-results
+    depends_on:
+      backend:
+        condition: service_healthy
+      frontend:
+        condition: service_healthy
+    networks:
+      - test_network
+    profiles:
+      - testing
+    command: >
+      sh -c "echo 'Waiting for services to be ready...' &&
+             sleep 10 &&
+             echo 'Running integration tests...' &&
+             python -m pytest tests/integration/ -v --tb=short --junitxml=test-results/integration-results.xml &&
+             echo 'Running API tests...' &&
+             python -m pytest tests/api/ -v --tb=short --junitxml=test-results/api-results.xml &&
+             echo 'Running end-to-end tests...' &&
+             python -m pytest tests/e2e/ -v --tb=short --junitxml=test-results/e2e-results.xml"
+
+  # Selenium for E2E testing
+  selenium:
+    image: selenium/standalone-chrome:latest
+    container_name: stock_selenium_test
+    ports:
+      - "4444:4444"
+      - "7900:7900"  # VNC server for debugging
+    environment:
+      - SE_VNC_NO_PASSWORD=1
+      - SE_NODE_MAX_SESSIONS=2
+      - SE_NODE_SESSION_TIMEOUT=300
+    volumes:
+      - /dev/shm:/dev/shm
+    networks:
+      - test_network
+    profiles:
+      - e2e
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:4444/wd/hub/status"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+  # Test database seeder
+  db_seeder:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+      target: development
+    container_name: stock_db_seeder_test
+    environment:
+      - ENVIRONMENT=test
+      - DATABASE_URL=postgresql://test_user:test_password@postgres_test:5432/test_db
+      - REDIS_URL=redis://redis_test:6379/0
+      - PYTHONPATH=/app
+    volumes:
+      - ./backend:/app
+      - ./backend/tests/fixtures:/app/fixtures
+    depends_on:
+      postgres_test:
+        condition: service_healthy
+      redis_test:
+        condition: service_healthy
+    networks:
+      - test_network
+    profiles:
+      - seeding
+    command: >
+      sh -c "echo 'Seeding test database...' &&
+             python scripts/seed_test_data.py &&
+             echo 'Test data seeded successfully'"
+
+  # Performance testing with k6
+  k6:
+    image: grafana/k6:latest
+    container_name: stock_k6_test
+    environment:
+      - K6_OUT=json=/app/results/performance-results.json
+      - BASE_URL=http://backend:8000
+      - FRONTEND_URL=http://frontend_test:3000
+    volumes:
+      - ./tests/performance:/scripts
+      - ./test-results:/app/results
+    depends_on:
+      backend:
+        condition: service_healthy
+      frontend:
+        condition: service_healthy
+    networks:
+      - test_network
+    profiles:
+      - performance
+    command: >
+      sh -c "echo 'Running performance tests...' &&
+             k6 run --vus 10 --duration 30s /scripts/load-test.js &&
+             k6 run --vus 5 --duration 60s /scripts/stress-test.js &&
+             echo 'Performance tests completed'"
+
+  # Test monitoring
+  prometheus_test:
+    image: prom/prometheus:latest
+    container_name: stock_prometheus_test
+    ports:
+      - "9091:9090"
+    volumes:
+      - ./tests/monitoring/prometheus-test.yml:/etc/prometheus/prometheus.yml:ro
+    networks:
+      - test_network
+    profiles:
+      - monitoring
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--storage.tsdb.retention.time=1h'
+      - '--web.enable-lifecycle'
+
+  # Test results collector
+  test_collector:
+    image: alpine:latest
+    container_name: stock_test_collector
+    volumes:
+      - ./test-results:/results
+      - ./tests/scripts:/scripts
+    networks:
+      - test_network
+    profiles:
+      - reporting
+    command: >
+      sh -c "echo 'Collecting test results...' &&
+             /scripts/collect-results.sh &&
+             echo 'Test results collected'"
+
+volumes:
+  postgres_test_data:
+    driver: local
+  redis_test_data:
+    driver: local
+
+networks:
+  test_network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16
+          gateway: 172.20.0.1
