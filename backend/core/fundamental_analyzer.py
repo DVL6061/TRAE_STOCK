@@ -9,7 +9,7 @@ from datetime import datetime, timedelta
 import warnings
 warnings.filterwarnings('ignore')
 
-from backend.utils.config import YAHOO_FINANCE_CONFIG
+#from backend.utils.config import YAHOO_FINANCE_CONFIG
 
 logger = logging.getLogger(__name__)
 
