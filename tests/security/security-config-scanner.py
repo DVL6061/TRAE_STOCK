@@ -401,23 +401,17 @@ class SecurityConfigScanner:
         logger.info("Scanning for exposed secrets...")
         
         secret_patterns = [
-            (r'password\s*=\s*["\'][^"\'
-\r]{1,}["\']', 'Password'),
-            (r'api[_-]?key\s*=\s*["\'][^"\'
-\r]{10,}["\']', 'API Key'),
-            (r'secret[_-]?key\s*=\s*["\'][^"\'
-\r]{10,}["\']', 'Secret Key'),
-            (r'access[_-]?token\s*=\s*["\'][^"\'
-\r]{10,}["\']', 'Access Token'),
-            (r'private[_-]?key\s*=\s*["\'][^"\'
-\r]{10,}["\']', 'Private Key'),
+            (r'password\s*=\s*["\'][^"\'\n\r]{1,}["\']', 'Password'),
+            (r'api[_-]?key\s*=\s*["\'][^"\'\n\r]{10,}["\']', 'API Key'),
+            (r'secret[_-]?key\s*=\s*["\'][^"\'\n\r]{10,}["\']', 'Secret Key'),
+            (r'access[_-]?token\s*=\s*["\'][^"\'\n\r]{10,}["\']', 'Access Token'),
+            (r'private[_-]?key\s*=\s*["\'][^"\'\n\r]{10,}["\']', 'Private Key'),
             (r'-----BEGIN\s+(RSA\s+)?PRIVATE\s+KEY-----', 'Private Key'),
             (r'sk_live_[a-zA-Z0-9]{24,}', 'Stripe Secret Key'),
             (r'pk_live_[a-zA-Z0-9]{24,}', 'Stripe Public Key'),
             (r'AKIA[0-9A-Z]{16}', 'AWS Access Key'),
             (r'[0-9a-f]{32}', 'MD5 Hash (potential secret)')
         ]
-        
         for config_file in self.config_files:
             if config_file.suffix in ['.py', '.js', '.json', '.yml', '.yaml', '.env', '.conf']:
                 try:
