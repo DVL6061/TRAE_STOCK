@@ -3,8 +3,7 @@ global:
   evaluation_interval: 15s
 
 rule_files:
-  # - "first_rules.yml"
-  # - "second_rules.yml"
+  - "alerting_rules.yml"
 
 scrape_configs:
   # Prometheus itself
@@ -50,8 +49,4 @@ alerting:
   alertmanagers:
     - static_configs:
         - targets:
-          # - alertmanager:9093
-
-# Recording rules for common queries
-rule_files:
-  - "alert_rules.yml"
+          - alertmanager:9093

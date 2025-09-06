@@ -42,7 +42,9 @@
     "home": "होम",
     "back": "वापस",
     "next": "अगला",
-    "previous": "पिछला"
+    "previous": "पिछला",
+    "userMenu": "उपयोगकर्ता मेनू",
+    "toggleSidebar": "साइडबार टॉगल करें"
   },
   "auth": {
     "login": "लॉगिन",
@@ -58,6 +60,7 @@
     "resetPassword": "पासवर्ड रीसेट करें",
     "rememberMe": "मुझे याद रखें",
     "loginSuccess": "लॉगिन सफल",
+    "creatingAccount": "खाता बनाया जा रहा है...",
     "loginError": "लॉगिन असफल। कृपया अपनी जानकारी जांचें।",
     "registerSuccess": "रजिस्ट्रेशन सफल",
     "registerError": "रजिस्ट्रेशन असफल। कृपया पुनः प्रयास करें।",
@@ -562,5 +565,65 @@
     "good": "अच्छा",
     "fair": "ठीक",
     "poor": "खराब"
+  },
+  "trading": {
+    "placeOrder": "ऑर्डर दें",
+    "marketOrder": "मार्केट ऑर्डर",
+    "limitOrder": "लिमिट ऑर्डर",
+    "stopOrder": "स्टॉप ऑर्डर",
+    "stopLimitOrder": "स्टॉप लिमिट ऑर्डर",
+    "day": "दिन",
+    "goodTillCanceled": "रद्द होने तक वैध",
+    "immediateOrCancel": "तुरंत या रद्द",
+    "fillOrKill": "भरें या रद्द करें",
+    "orderType": "ऑर्डर प्रकार",
+    "timeInForce": "समय सीमा",
+    "stockSymbol": "स्टॉक सिंबल",
+    "reset": "रीसेट",
+    "placing": "ऑर्डर दे रहे हैं..."
+  },
+  "forms": {
+    "email": "ईमेल",
+    "password": "पासवर्ड",
+    "confirmPassword": "पासवर्ड की पुष्टि करें",
+    "firstName": "पहला नाम",
+    "lastName": "अंतिम नाम",
+    "phone": "फोन नंबर",
+    "emailAddress": "ईमेल पता",
+    "signingIn": "साइन इन हो रहे हैं...",
+    "signIn": "साइन इन",
+    "createAccount": "खाता बनाएं",
+    "selectOption": "एक विकल्प चुनें",
+    "enterQuantity": "मात्रा दर्ज करें",
+    "enterPrice": "कीमत दर्ज करें"
+  },
+  "passwordStrength": {
+    "veryWeak": "बहुत कमजोर",
+    "weak": "कमजोर",
+    "fair": "ठीक",
+    "good": "अच्छा",
+    "strong": "मजबूत",
+    "tooWeak": "बहुत कमजोर"
+  },
+  "notifications": {
+    "markAllRead": "सभी को पढ़ा हुआ चिह्नित करें",
+    "noNotifications": "कोई सूचना नहीं"
+  },
+  "indicators": {
+    "rsi": "आरएसआई",
+    "macd": "एमएसीडी",
+    "stochastic": "स्टोकैस्टिक",
+    "williamsR": "विलियम्स %आर"
+  },
+  "stocks": {
+    "reliance": "रिलायंस इंडस्ट्रीज",
+    "tcs": "टाटा कंसल्टेंसी सर्विसेज",
+    "infosys": "इंफोसिस",
+    "hdfcBank": "एचडीएफसी बैंक",
+    "iciciBank": "आईसीआईसीआई बैंक"
+  },
+  "placeholders": {
+    "enterQuantity": "मात्रा दर्ज करें",
+    "enterPrice": "कीमत दर्ज करें"
   }
 }

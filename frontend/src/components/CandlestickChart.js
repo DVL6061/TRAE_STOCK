@@ -755,10 +755,10 @@ const CandlestickChart = ({
             onChange={(e) => setSelectedIndicator(e.target.value)}
             className="w-full sm:w-auto px-2 sm:px-3 py-1 text-xs sm:text-sm border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:border-gray-600 dark:text-white"
           >
-            <option value="RSI">RSI</option>
-            <option value="MACD">MACD</option>
-            <option value="stochastic">Stochastic</option>
-            <option value="williams_r">Williams %R</option>
+            <option value="RSI">{t('indicators.rsi')}</option>
+            <option value="MACD">{t('indicators.macd')}</option>
+            <option value="stochastic">{t('indicators.stochastic')}</option>
+            <option value="williams_r">{t('indicators.williamsR')}</option>
           </select>
         </div>
         

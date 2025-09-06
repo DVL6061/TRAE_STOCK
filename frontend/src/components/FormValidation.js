@@ -427,7 +427,7 @@ export const TradingForm = ({ onSubmit, initialData = {} }) => {
             name="quantity"
             label={t('quantity')}
             type="number"
-            placeholder="Enter quantity"
+            placeholder={t('placeholders.enterQuantity')}
             value={values.quantity}
             error={errors.quantity}
             touched={touched.quantity}
@@ -441,7 +441,7 @@ export const TradingForm = ({ onSubmit, initialData = {} }) => {
             label={t('price')}
             type="number"
             step="0.01"
-            placeholder="Enter price"
+            placeholder={t('placeholders.enterPrice')}
             value={values.price}
             error={errors.price}
             touched={touched.price}

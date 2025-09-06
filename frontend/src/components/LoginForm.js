@@ -13,7 +13,7 @@ const LoginForm = ({ onSuccess, onSwitchToRegister }) => {
     email: {
       required: true,
       email: true,
-      message: 'Please enter a valid email address'
+      message: t('validation.enterValidEmail')
     },
     password: {
       required: true,
@@ -140,7 +140,7 @@ const LoginForm = ({ onSuccess, onSwitchToRegister }) => {
                 className={`appearance-none rounded-none relative block w-full px-3 py-2 border ${
                   errors.email ? 'border-red-300' : 'border-gray-300'
                 } placeholder-gray-500 text-gray-900 rounded-t-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm`}
-                placeholder="Email address"
+                placeholder={t('forms.emailAddress')}
                 value={values.email}
                 onChange={handleChange}
                 onBlur={handleBlur}
@@ -164,7 +164,7 @@ const LoginForm = ({ onSuccess, onSwitchToRegister }) => {
                 className={`appearance-none rounded-none relative block w-full px-3 py-2 pr-10 border ${
                   errors.password ? 'border-red-300' : 'border-gray-300'
                 } placeholder-gray-500 text-gray-900 rounded-b-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm`}
-                placeholder="Password"
+                placeholder={t('forms.password')}
                 value={values.password}
                 onChange={handleChange}
                 onBlur={handleBlur}
@@ -272,7 +272,7 @@ const LoginForm = ({ onSuccess, onSwitchToRegister }) => {
                   </svg>
                 )}
               </span>
-              {isLoading ? 'Signing in...' : 'Sign in'}
+              {isLoading ? t('forms.signingIn') : t('forms.signIn')}
             </button>
           </div>
 

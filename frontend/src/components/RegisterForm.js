@@ -28,12 +28,12 @@ const RegisterForm = ({ onSuccess, onSwitchToLogin }) => {
     email: {
       required: true,
       email: true,
-      message: 'Please enter a valid email address'
+      message: t('validation.enterValidEmail')
     },
     phone: {
       required: false,
       pattern: /^[+]?[1-9]?[0-9]{7,15}$/,
-      message: 'Please enter a valid phone number'
+      message: t('validation.enterValidPhone')
     },
     password: {
       required: true,
@@ -45,11 +45,11 @@ const RegisterForm = ({ onSuccess, onSwitchToLogin }) => {
       required: true,
       custom: (value, allValues) => {
         if (value !== allValues.password) {
-          return 'Passwords do not match';
+          return t('validation.passwordsDoNotMatch');
         }
         return null;
       },
-      message: 'Please confirm your password'
+      message: t('validation.confirmYourPassword')
     }
   };
 
@@ -131,7 +131,7 @@ const RegisterForm = ({ onSuccess, onSwitchToLogin }) => {
   };
 
   const passwordStrength = getPasswordStrength(values.password);
-  const strengthLabels = ['Very Weak', 'Weak', 'Fair', 'Good', 'Strong'];
+  const strengthLabels = [t('passwordStrength.veryWeak'), t('passwordStrength.weak'), t('passwordStrength.fair'), t('passwordStrength.good'), t('passwordStrength.strong')];
   const strengthColors = ['bg-red-500', 'bg-orange-500', 'bg-yellow-500', 'bg-blue-500', 'bg-green-500'];
 
   if (registrationSuccess) {
@@ -200,7 +200,7 @@ const RegisterForm = ({ onSuccess, onSwitchToLogin }) => {
                   className={`mt-1 appearance-none relative block w-full px-3 py-2 border ${
                     errors.firstName ? 'border-red-300' : 'border-gray-300'
                   } placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm`}
-                  placeholder="First Name"
+                  placeholder={t('forms.firstName')}
                   value={values.firstName}
                   onChange={handleChange}
                   onBlur={handleBlur}
@@ -224,7 +224,7 @@ const RegisterForm = ({ onSuccess, onSwitchToLogin }) => {
                   className={`mt-1 appearance-none relative block w-full px-3 py-2 border ${
                     errors.lastName ? 'border-red-300' : 'border-gray-300'
                   } placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm`}
-                  placeholder="Last Name"
+                  placeholder={t('forms.lastName')}
                   value={values.lastName}
                   onChange={handleChange}
                   onBlur={handleBlur}
@@ -250,7 +250,7 @@ const RegisterForm = ({ onSuccess, onSwitchToLogin }) => {
                 className={`mt-1 appearance-none relative block w-full px-3 py-2 border ${
                   errors.email ? 'border-red-300' : 'border-gray-300'
                 } placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm`}
-                placeholder="Email Address"
+                placeholder={t('forms.emailAddress')}
                 value={values.email}
                 onChange={handleChange}
                 onBlur={handleBlur}
@@ -274,7 +274,7 @@ const RegisterForm = ({ onSuccess, onSwitchToLogin }) => {
                 className={`mt-1 appearance-none relative block w-full px-3 py-2 border ${
                   errors.phone ? 'border-red-300' : 'border-gray-300'
                 } placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm`}
-                placeholder="+1 (555) 123-4567"
+                placeholder={t('forms.phone')}
                 value={values.phone}
                 onChange={handleChange}
                 onBlur={handleBlur}
@@ -300,7 +300,7 @@ const RegisterForm = ({ onSuccess, onSwitchToLogin }) => {
                   className={`appearance-none relative block w-full px-3 py-2 pr-10 border ${
                     errors.password ? 'border-red-300' : 'border-gray-300'
                   } placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm`}
-                  placeholder="Password"
+                  placeholder={t('forms.password')}
                   value={values.password}
                   onChange={handleChange}
                   onBlur={handleBlur}
@@ -366,7 +366,7 @@ const RegisterForm = ({ onSuccess, onSwitchToLogin }) => {
                   className={`appearance-none relative block w-full px-3 py-2 pr-10 border ${
                     errors.confirmPassword ? 'border-red-300' : 'border-gray-300'
                   } placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm`}
-                  placeholder="Confirm Password"
+                  placeholder={t('forms.confirmPassword')}
                   value={values.confirmPassword}
                   onChange={handleChange}
                   onBlur={handleBlur}
@@ -470,7 +470,7 @@ const RegisterForm = ({ onSuccess, onSwitchToLogin }) => {
                   </svg>
                 )}
               </span>
-              {isLoading ? 'Creating Account...' : 'Create Account'}
+              {isLoading ? t('auth.creatingAccount') : t('forms.createAccount')}
             </button>
           </div>
 

@@ -95,7 +95,7 @@ const Header = ({ onMenuClick, sidebarOpen }) => {
               type="button"
               onClick={onMenuClick}
               className="lg:hidden rounded-md p-1.5 sm:p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:hover:bg-gray-700 dark:hover:text-gray-300"
-              aria-label="Toggle sidebar"
+              aria-label={t('navigation.toggleSidebar')}
             >
               <Bars3Icon className="h-5 w-5 sm:h-6 sm:w-6" />
             </button>
@@ -249,7 +249,7 @@ const Header = ({ onMenuClick, sidebarOpen }) => {
                 type="button"
                 onClick={() => setShowUserMenu(!showUserMenu)}
                 className="flex items-center gap-1 sm:gap-2 rounded-lg p-1.5 sm:p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:hover:bg-gray-700 dark:hover:text-gray-300"
-                aria-label="User menu"
+                aria-label={t('navigation.userMenu')}
               >
                 {user.avatar ? (
                   <img 

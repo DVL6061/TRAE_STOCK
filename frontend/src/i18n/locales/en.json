@@ -42,12 +42,15 @@
     "home": "Home",
     "back": "Back",
     "next": "Next",
-    "previous": "Previous"
+    "previous": "Previous",
+    "userMenu": "User menu",
+    "toggleSidebar": "Toggle sidebar"
   },
   "auth": {
     "login": "Login",
     "register": "Register",
     "logout": "Logout",
+    "creatingAccount": "Creating Account...",
     "email": "Email",
     "password": "Password",
     "confirmPassword": "Confirm Password",
@@ -600,5 +603,65 @@
     "good": "Good",
     "fair": "Fair",
     "poor": "Poor"
+  },
+  "notifications": {
+    "markAllRead": "Mark all as read",
+    "noNotifications": "No notifications"
+  },
+  "indicators": {
+    "rsi": "RSI",
+    "macd": "MACD",
+    "stochastic": "Stochastic",
+    "williamsR": "Williams %R"
+  },
+  "stocks": {
+    "reliance": "Reliance Industries",
+    "tcs": "Tata Consultancy Services",
+    "infosys": "Infosys",
+    "hdfcBank": "HDFC Bank",
+    "iciciBank": "ICICI Bank"
+  },
+  "placeholders": {
+    "enterQuantity": "Enter quantity",
+    "enterPrice": "Enter price"
+  },
+  "trading": {
+    "placeOrder": "Place Order",
+    "marketOrder": "Market Order",
+    "limitOrder": "Limit Order",
+    "stopOrder": "Stop Order",
+    "stopLimitOrder": "Stop Limit Order",
+    "day": "Day",
+    "goodTillCanceled": "Good Till Canceled",
+    "immediateOrCancel": "Immediate or Cancel",
+    "fillOrKill": "Fill or Kill",
+    "orderType": "Order Type",
+    "timeInForce": "Time in Force",
+    "stockSymbol": "Stock Symbol",
+    "reset": "Reset",
+    "placing": "Placing..."
+  },
+  "forms": {
+    "email": "Email",
+    "password": "Password",
+    "confirmPassword": "Confirm Password",
+    "firstName": "First Name",
+    "lastName": "Last Name",
+    "phone": "Phone Number",
+    "emailAddress": "Email Address",
+    "signingIn": "Signing in...",
+    "signIn": "Sign in",
+    "createAccount": "Create Account",
+    "selectOption": "Select an option",
+    "enterQuantity": "Enter quantity",
+    "enterPrice": "Enter price"
+  },
+  "passwordStrength": {
+    "veryWeak": "Very Weak",
+    "weak": "Weak",
+    "fair": "Fair",
+    "good": "Good",
+    "strong": "Strong",
+    "tooWeak": "Too Weak"
   }
 }

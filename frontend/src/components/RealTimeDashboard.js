@@ -206,11 +206,11 @@ const RealTimeDashboard = () => {
             onChange={(e) => setSelectedSymbol(e.target.value)}
             className="w-full sm:w-auto px-3 sm:px-4 py-2 text-sm sm:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:border-gray-600 dark:text-white"
           >
-            <option value="RELIANCE">Reliance Industries</option>
-            <option value="TCS">Tata Consultancy Services</option>
-            <option value="INFY">Infosys</option>
-            <option value="HDFCBANK">HDFC Bank</option>
-            <option value="ICICIBANK">ICICI Bank</option>
+            <option value="RELIANCE">{t('stocks.reliance')}</option>
+            <option value="TCS">{t('stocks.tcs')}</option>
+            <option value="INFY">{t('stocks.infosys')}</option>
+            <option value="HDFCBANK">{t('stocks.hdfcBank')}</option>
+            <option value="ICICIBANK">{t('stocks.iciciBank')}</option>
           </select>
           
           <select
