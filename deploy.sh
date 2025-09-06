@@ -95,6 +95,9 @@ DATABASE_URL=postgresql://stockuser:$(openssl rand -base64 32)@postgres:5432/sto
 
 # Redis Configuration
 REDIS_URL=redis://redis:6379/0
+REDIS_HOST=redis
+REDIS_PORT=6379
+REDIS_DB=0
 
 # API Keys (REPLACE WITH YOUR ACTUAL KEYS)
 ALPHA_VANTAGE_API_KEY=YQKILNW2LG827ITH
