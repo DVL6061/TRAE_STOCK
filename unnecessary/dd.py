@@ -46,9 +46,9 @@ async def fetch_historical_data(
         return []
 
 async def main():
-    data = await fetch_historical_data("TATAMOTORS.NS", "2023-01-01", "2024-12-31")
-    print(data.head(1500))
-    data.to_csv("TATAMOTORS.NS.xls", index=False)
+    data = await fetch_historical_data("TATAMOTORS.NS", "1945-01-01", "2025-12-31")
+    #print(data.head(1500))
+    data.to_csv("TATAMOTORS.NS.csv", index=False)
 
 if __name__ == "__main__":
     asyncio.run(main())
