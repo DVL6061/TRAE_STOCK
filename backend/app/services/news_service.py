@@ -18,10 +18,10 @@ from app.models.news import (
     NewsSource, NewsCategory, SentimentLabel,
     NewsSearchRequest, NewsSearchResponse
 )
-from app.models.prediction import SentimentAnalysis
+from backend.app.models.prediction import SentimentAnalysis
 from backend.ML_models.sentiment_model import SentimentModel
 from backend.core.news_processor import analyze_sentiment, fetch_news, get_news_impact
-from app.config import NEWS_SOURCES
+from backend.app.config import NEWS_SOURCES
 
 logger = logging.getLogger(__name__)
 
