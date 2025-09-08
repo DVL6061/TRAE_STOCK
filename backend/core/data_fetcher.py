@@ -9,7 +9,16 @@ from typing import List, Dict, Any, Optional, Union
 import requests
 import pyotp
 import json
-from ..utils.config import ANGEL_ONE_API_KEY, ANGEL_ONE_CLIENT_ID, ANGEL_ONE_PASSWORD
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
+
+ANGEL_ONE_API_KEY = os.getenv('ANGEL_ONE_API_KEY')
+ANGEL_ONE_CLIENT_ID = os.getenv('ANGEL_ONE_CLIENT_ID') 
+ANGEL_ONE_PASSWORD = os.getenv('ANGEL_ONE_PASSWORD')    
+ANGEL_ONE_TOTP = os.getenv('ANGEL_ONE_TOTP_SECRET')
+ANGEL_ONE_API_URL = os.getenv('ANGEL_ONE_API_URL')
 
 logger = logging.getLogger(__name__)
 
