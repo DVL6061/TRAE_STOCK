@@ -175,3 +175,4 @@ async def get_news_sources():
     except Exception as e:
         logger.error(f"Error fetching news sources: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Failed to fetch news sources: {str(e)}")
+
