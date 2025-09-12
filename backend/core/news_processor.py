@@ -3,69 +3,33 @@ import pandas as pd
 import numpy as np
 import logging
 import asyncio
+import os
 from datetime import datetime, timedelta
 from typing import List, Dict, Any, Optional, Union
 import re
 from bs4 import BeautifulSoup
 
-# Import FinGPT sentiment analysis model
+# Import real news fetching and sentiment analysis models
+from data.news_fetcher import NewsAPIFetcher, NewsDatabase, NewsArticle
 from ML_models.sentiment_model import SentimentModel
 from ML_models.fingpt_model import FinGPTSentimentAnalyzer
 
 logger = logging.getLogger(__name__)
 
-# Mock news data for development
-MOCK_NEWS_SOURCES = {
-    "cnbc": "CNBC",
+# Initialize news database and fetchers
+news_db = NewsDatabase()
+news_api_key = os.getenv('NEWS_API_KEY')
+news_api_fetcher = NewsAPIFetcher(news_api_key) if news_api_key else None
+
+# News sources configuration
+NEWS_SOURCES = {
+    "newsapi": "NewsAPI",
+    "cnbc": "CNBC", 
     "moneycontrol": "Moneycontrol",
     "economic_times": "Economic Times",
     "mint": "Mint",
     "business_standard": "Business Standard"
 }
-
-# Mock news data for Tata Motors
-MOCK_TATA_MOTORS_NEWS = [
-    {
-        "title": "Tata Motors reports strong Q1 sales growth, EV segment shines",
-        "description": "Tata Motors reported a 20% year-on-year growth in Q1 sales, with its electric vehicle segment showing particularly strong performance with a 45% increase.",
-        "source": "economic_times",
-        "url": "https://economictimes.indiatimes.com/industry/auto/auto-news/tata-motors-reports-strong-q1-sales-growth-ev-segment-shines/articleshow/123456789.cms",
-        "published_at": (datetime.now() - timedelta(days=2)).isoformat(),
-        "keywords": ["Tata Motors", "Q1 results", "EV", "sales growth"]
-    },
-    {
-        "title": "Tata Motors launches new electric SUV model in Indian market",
-        "description": "Tata Motors has launched its latest electric SUV model in the Indian market, priced competitively to accelerate EV adoption in the country.",
-        "source": "moneycontrol",
-        "url": "https://www.moneycontrol.com/news/business/companies/tata-motors-launches-new-electric-suv-model-in-indian-market-123456.html",
-        "published_at": (datetime.now() - timedelta(days=5)).isoformat(),
-        "keywords": ["Tata Motors", "electric SUV", "EV", "product launch"]
-    },
-    {
-        "title": "Global chip shortage continues to impact Tata Motors production",
-        "description": "The ongoing global semiconductor shortage is affecting Tata Motors' production capacity, potentially impacting delivery timelines for new vehicles.",
-        "source": "mint",
-        "url": "https://www.livemint.com/companies/news/global-chip-shortage-continues-to-impact-tata-motors-production-11623456789.html",
-        "published_at": (datetime.now() - timedelta(days=7)).isoformat(),
-        "keywords": ["Tata Motors", "chip shortage", "semiconductor", "production"]
-    },
-    {
-        "title": "Tata Motors announces partnership with leading battery manufacturer",
-        "description": "Tata Motors has announced a strategic partnership with a leading battery manufacturer to strengthen its electric vehicle supply chain and reduce costs.",
-        "source": "business_standard",
-        "url": "https://www.business-standard.com/article/companies/tata-motors-announces-partnership-with-leading-battery-manufacturer-123456789.html",
-        "published_at": (datetime.now() - timedelta(days=10)).isoformat(),
-        "keywords": ["Tata Motors", "battery", "partnership", "EV", "supply chain"]
-    },
-    {
-        "title": "Tata Motors shares surge 5% on positive analyst outlook",
-        "description": "Shares of Tata Motors surged 5% in today's trading session after multiple analysts upgraded their outlook for the company, citing strong domestic demand and improving JLR performance.",
-        "source": "cnbc",
-        "url": "https://www.cnbctv18.com/market/stocks/tata-motors-shares-surge-5-on-positive-analyst-outlook-123456789.html",
-        "published_at": (datetime.now() - timedelta(days=1)).isoformat(),
-        "keywords": ["Tata Motors", "shares", "stock market", "analyst outlook"]
-    }
-]
 
 # Mock sentiment analysis function
 async def mock_analyze_sentiment(text: str) -> Dict[str, Any]:
