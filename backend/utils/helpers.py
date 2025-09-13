@@ -6,6 +6,8 @@ from datetime import datetime, timedelta
 from typing import List, Dict, Any, Optional, Union
 import os
 import re
+import talib
+from talib import abstract
 
 logger = logging.getLogger(__name__)
 
@@ -238,3 +240,213 @@ def is_market_open() -> bool:
     market_close = now.replace(hour=15, minute=30, second=0, microsecond=0)
     
     return market_open <= now <= market_close
+
+# Technical Indicators Implementation using TA-Lib
+
+def calculate_sma(data: pd.Series, period: int) -> pd.Series:
+    """Calculate Simple Moving Average"""
+    return talib.SMA(data.values, timeperiod=period)
+
+def calculate_ema(data: pd.Series, period: int) -> pd.Series:
+    """Calculate Exponential Moving Average"""
+    return talib.EMA(data.values, timeperiod=period)
+
+def calculate_rsi(data: pd.Series, period: int = 14) -> pd.Series:
+    """Calculate Relative Strength Index"""
+    return talib.RSI(data.values, timeperiod=period)
+
+def calculate_macd(data: pd.Series, fast_period: int = 12, slow_period: int = 26, signal_period: int = 9) -> Dict[str, pd.Series]:
+    """Calculate MACD (Moving Average Convergence Divergence)"""
+    macd, macd_signal, macd_histogram = talib.MACD(data.values, fastperiod=fast_period, slowperiod=slow_period, signalperiod=signal_period)
+    return {
+        'macd': pd.Series(macd, index=data.index),
+        'macd_signal': pd.Series(macd_signal, index=data.index),
+        'macd_histogram': pd.Series(macd_histogram, index=data.index)
+    }
+
+def calculate_bollinger_bands(data: pd.Series, period: int = 20, std_dev: int = 2) -> Dict[str, pd.Series]:
+    """Calculate Bollinger Bands"""
+    bb_upper, bb_middle, bb_lower = talib.BBANDS(data.values, timeperiod=period, nbdevup=std_dev, nbdevdn=std_dev)
+    return {
+        'bb_upper': pd.Series(bb_upper, index=data.index),
+        'bb_middle': pd.Series(bb_middle, index=data.index),
+        'bb_lower': pd.Series(bb_lower, index=data.index)
+    }
+
+def calculate_stochastic(high: pd.Series, low: pd.Series, close: pd.Series, k_period: int = 14, d_period: int = 3) -> Dict[str, pd.Series]:
+    """Calculate Stochastic Oscillator"""
+    slowk, slowd = talib.STOCH(high.values, low.values, close.values, fastk_period=k_period, slowk_period=d_period, slowd_period=d_period)
+    return {
+        'stoch_k': pd.Series(slowk, index=close.index),
+        'stoch_d': pd.Series(slowd, index=close.index)
+    }
+
+def calculate_atr(high: pd.Series, low: pd.Series, close: pd.Series, period: int = 14) -> pd.Series:
+    """Calculate Average True Range"""
+    return talib.ATR(high.values, low.values, close.values, timeperiod=period)
+
+def calculate_adx(high: pd.Series, low: pd.Series, close: pd.Series, period: int = 14) -> pd.Series:
+    """Calculate Average Directional Index"""
+    return talib.ADX(high.values, low.values, close.values, timeperiod=period)
+
+def calculate_cci(high: pd.Series, low: pd.Series, close: pd.Series, period: int = 14) -> pd.Series:
+    """Calculate Commodity Channel Index"""
+    return talib.CCI(high.values, low.values, close.values, timeperiod=period)
+
+def calculate_williams_r(high: pd.Series, low: pd.Series, close: pd.Series, period: int = 14) -> pd.Series:
+    """Calculate Williams %R"""
+    return talib.WILLR(high.values, low.values, close.values, timeperiod=period)
+
+def calculate_obv(close: pd.Series, volume: pd.Series) -> pd.Series:
+    """Calculate On-Balance Volume"""
+    return talib.OBV(close.values, volume.values)
+
+def calculate_vwap(high: pd.Series, low: pd.Series, close: pd.Series, volume: pd.Series) -> pd.Series:
+    """Calculate Volume Weighted Average Price"""
+    typical_price = (high + low + close) / 3
+    return (typical_price * volume).cumsum() / volume.cumsum()
+
+def calculate_all_technical_indicators(df: pd.DataFrame) -> pd.DataFrame:
+    """
+    Calculate all technical indicators for a given OHLCV DataFrame.
+    
+    Args:
+        df: DataFrame with columns ['open', 'high', 'low', 'close', 'volume']
+        
+    Returns:
+        DataFrame with all technical indicators added
+    """
+    result_df = df.copy()
+    
+    try:
+        # Moving Averages
+        result_df['sma_5'] = calculate_sma(df['close'], 5)
+        result_df['sma_10'] = calculate_sma(df['close'], 10)
+        result_df['sma_20'] = calculate_sma(df['close'], 20)
+        result_df['sma_50'] = calculate_sma(df['close'], 50)
+        result_df['sma_200'] = calculate_sma(df['close'], 200)
+        
+        result_df['ema_12'] = calculate_ema(df['close'], 12)
+        result_df['ema_26'] = calculate_ema(df['close'], 26)
+        result_df['ema_50'] = calculate_ema(df['close'], 50)
+        
+        # RSI
+        result_df['rsi'] = calculate_rsi(df['close'])
+        
+        # MACD
+        macd_data = calculate_macd(df['close'])
+        result_df['macd'] = macd_data['macd']
+        result_df['macd_signal'] = macd_data['macd_signal']
+        result_df['macd_histogram'] = macd_data['macd_histogram']
+        
+        # Bollinger Bands
+        bb_data = calculate_bollinger_bands(df['close'])
+        result_df['bb_upper'] = bb_data['bb_upper']
+        result_df['bb_middle'] = bb_data['bb_middle']
+        result_df['bb_lower'] = bb_data['bb_lower']
+        
+        # Stochastic
+        stoch_data = calculate_stochastic(df['high'], df['low'], df['close'])
+        result_df['stoch_k'] = stoch_data['stoch_k']
+        result_df['stoch_d'] = stoch_data['stoch_d']
+        
+        # ATR
+        result_df['atr'] = calculate_atr(df['high'], df['low'], df['close'])
+        
+        # ADX
+        result_df['adx'] = calculate_adx(df['high'], df['low'], df['close'])
+        
+        # CCI
+        result_df['cci'] = calculate_cci(df['high'], df['low'], df['close'])
+        
+        # Williams %R
+        result_df['williams_r'] = calculate_williams_r(df['high'], df['low'], df['close'])
+        
+        # OBV
+        result_df['obv'] = calculate_obv(df['close'], df['volume'])
+        
+        # VWAP
+        result_df['vwap'] = calculate_vwap(df['high'], df['low'], df['close'], df['volume'])
+        
+        # Additional derived indicators
+        result_df['price_sma20_ratio'] = df['close'] / result_df['sma_20']
+        result_df['volume_sma20'] = calculate_sma(df['volume'], 20)
+        result_df['volume_ratio'] = df['volume'] / result_df['volume_sma20']
+        
+        logger.info("Successfully calculated all technical indicators")
+        
+    except Exception as e:
+        logger.error(f"Error calculating technical indicators: {str(e)}")
+        raise
+    
+    return result_df
+
+def get_trading_signals(df: pd.DataFrame) -> Dict[str, Any]:
+    """
+    Generate trading signals based on technical indicators.
+    
+    Args:
+        df: DataFrame with technical indicators
+        
+    Returns:
+        Dictionary containing trading signals and their strengths
+    """
+    signals = {
+        'buy_signals': [],
+        'sell_signals': [],
+        'neutral_signals': [],
+        'overall_signal': 'HOLD',
+        'signal_strength': 0.0
+    }
+    
+    try:
+        latest = df.iloc[-1]
+        
+        # RSI Signals
+        if latest['rsi'] < 30:
+            signals['buy_signals'].append('RSI Oversold')
+        elif latest['rsi'] > 70:
+            signals['sell_signals'].append('RSI Overbought')
+        else:
+            signals['neutral_signals'].append('RSI Neutral')
+        
+        # MACD Signals
+        if latest['macd'] > latest['macd_signal']:
+            signals['buy_signals'].append('MACD Bullish')
+        else:
+            signals['sell_signals'].append('MACD Bearish')
+        
+        # Bollinger Bands Signals
+        if latest['close'] < latest['bb_lower']:
+            signals['buy_signals'].append('BB Oversold')
+        elif latest['close'] > latest['bb_upper']:
+            signals['sell_signals'].append('BB Overbought')
+        else:
+            signals['neutral_signals'].append('BB Neutral')
+        
+        # Moving Average Signals
+        if latest['close'] > latest['sma_20'] > latest['sma_50']:
+            signals['buy_signals'].append('MA Bullish Trend')
+        elif latest['close'] < latest['sma_20'] < latest['sma_50']:
+            signals['sell_signals'].append('MA Bearish Trend')
+        
+        # Calculate overall signal
+        buy_count = len(signals['buy_signals'])
+        sell_count = len(signals['sell_signals'])
+        
+        if buy_count > sell_count:
+            signals['overall_signal'] = 'BUY'
+            signals['signal_strength'] = min(0.9, (buy_count - sell_count) / 10)
+        elif sell_count > buy_count:
+            signals['overall_signal'] = 'SELL'
+            signals['signal_strength'] = min(0.9, (sell_count - buy_count) / 10)
+        else:
+            signals['overall_signal'] = 'HOLD'
+            signals['signal_strength'] = 0.5
+        
+    except Exception as e:
+        logger.error(f"Error generating trading signals: {str(e)}")
+        signals['overall_signal'] = 'HOLD'
+        signals['signal_strength'] = 0.0
+    
+    return signals

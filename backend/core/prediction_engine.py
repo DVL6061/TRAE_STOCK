@@ -13,162 +13,23 @@ from backend.core.news_processor import fetch_news, analyze_sentiment
 # Import ML models
 from backend.ML_models.xgboost_model import XGBoostModel
 from backend.ML_models.informer_model import InformerModel
-from backend.ML_models.dqn_model import DQNModel
+from backend.ML_models.dqn_model import DQNAgent
+from backend.utils.helpers import calculate_all_technical_indicators, get_trading_signals
 import xgboost as xgb
 import shap
 
 logger = logging.getLogger(__name__)
-
-# Mock prediction models for development
-class MockXGBoostModel:
-    """Mock XGBoost model for development"""
-    
-    def __init__(self, ticker: str):
-        self.ticker = ticker
-        logger.info(f"Initialized mock XGBoost model for {ticker}")
-        
-    async def predict(self, data: pd.DataFrame, prediction_window: str) -> np.ndarray:
-        # Generate mock predictions
-        last_close = data["close"].iloc[-1]
-        
-        # Map prediction window to number of days
-        days_map = {
-            "1d": 1, "3d": 3, "1w": 7, "2w": 14, "1m": 30, "3m": 90
-        }
-        days = days_map.get(prediction_window, 1)
-        
-        # Generate trend based on recent data
-        recent_trend = data["close"].iloc[-5:].pct_change().mean()
-        
-        # Add some randomness to the prediction
-        trend_factor = recent_trend * 10 + np.random.normal(0, 0.01)
-        predicted_change = trend_factor * days / 10
-        
-        # Calculate predicted price
-        predicted_price = last_close * (1 + predicted_change)
-        
-        # Add some uncertainty for confidence interval
-        std_dev = last_close * 0.02 * np.sqrt(days / 7)  # Increasing with time
-        
-        return {
-            "predicted_price": round(predicted_price, 2),
-            "confidence_interval": {
-                "lower": round(predicted_price - 1.96 * std_dev, 2),
-                "upper": round(predicted_price + 1.96 * std_dev, 2)
-            },
-            "predicted_change": round(predicted_change * 100, 2),
-            "prediction_window": prediction_window
-        }
-
-class MockInformerModel:
-    """Mock Informer (Transformer) model for development"""
-    
-    def __init__(self, ticker: str):
-        self.ticker = ticker
-        logger.info(f"Initialized mock Informer model for {ticker}")
-        
-    async def predict(self, data: pd.DataFrame, prediction_window: str) -> np.ndarray:
-        # Similar to XGBoost but with different characteristics
-        last_close = data["close"].iloc[-1]
-        
-        # Map prediction window to number of days
-        days_map = {
-            "1d": 1, "3d": 3, "1w": 7, "2w": 14, "1m": 30, "3m": 90
-        }
-        days = days_map.get(prediction_window, 1)
-        
-        # Generate trend based on longer historical data
-        long_trend = data["close"].pct_change().mean()
-        
-        # Add some randomness to the prediction
-        trend_factor = long_trend * 15 + np.random.normal(0, 0.008)
-        predicted_change = trend_factor * days / 15
-        
-        # Calculate predicted price
-        predicted_price = last_close * (1 + predicted_change)
-        
-        # Add some uncertainty for confidence interval
-        # Informer typically has narrower confidence intervals for longer predictions
-        std_dev = last_close * 0.015 * np.sqrt(days / 10)
-        
-        return {
-            "predicted_price": round(predicted_price, 2),
-            "confidence_interval": {
-                "lower": round(predicted_price - 1.96 * std_dev, 2),
-                "upper": round(predicted_price + 1.96 * std_dev, 2)
-            },
-            "predicted_change": round(predicted_change * 100, 2),
-            "prediction_window": prediction_window
-        }
-
-class MockDQNModel:
-    """Mock Deep Q-Network model for development"""
-    
-    def __init__(self, ticker: str):
-        self.ticker = ticker
-        logger.info(f"Initialized mock DQN model for {ticker}")
-        
-    async def predict_action(self, data: pd.DataFrame, risk_tolerance: str) -> Dict[str, Any]:
-        # Generate mock trading signal
-        last_close = data["close"].iloc[-1]
-        
-        # Calculate recent price momentum
-        returns = data["close"].pct_change().dropna()
-        momentum_5d = returns.iloc[-5:].mean()
-        momentum_20d = returns.iloc[-20:].mean()
-        
-        # Calculate mock technical signals
-        rsi_value = 50 + momentum_5d * 1000  # Mock RSI
-        rsi_value = max(0, min(100, rsi_value))  # Bound between 0 and 100
-        
-        macd_value = momentum_5d * 10  # Mock MACD
-        macd_signal = momentum_20d * 10  # Mock MACD signal
-        
-        # Determine action based on signals
-        if rsi_value > 70 and macd_value < macd_signal:
-            action = "sell"
-            confidence = 0.7 + abs(rsi_value - 70) / 100
-        elif rsi_value < 30 and macd_value > macd_signal:
-            action = "buy"
-            confidence = 0.7 + abs(30 - rsi_value) / 100
-        else:
-            # Adjust hold confidence based on how close to neutral
-            distance_from_neutral = abs(rsi_value - 50) / 50
-            action = "hold"
-            confidence = 0.5 + (0.5 - distance_from_neutral)
-        
-        # Adjust based on risk tolerance
-        if risk_tolerance == "low":
-            # More conservative - bias toward hold
-            if action != "hold":
-                confidence *= 0.8
-        elif risk_tolerance == "high":
-            # More aggressive - boost buy/sell confidence
-            if action != "hold":
-                confidence = min(0.95, confidence * 1.2)
-        
-        return {
-            "action": action,
-            "confidence": round(min(0.95, confidence), 2),
-            "price": last_close,
-            "signals": {
-                "rsi": round(rsi_value, 2),
-                "macd": round(macd_value, 4),
-                "macd_signal": round(macd_signal, 4),
-                "momentum_5d": round(momentum_5d * 100, 2),
-                "momentum_20d": round(momentum_20d * 100, 2)
-            }
-        }
+# Real ML models are now used directly through the factory function
 
 # Model factory function
 async def get_model(model_type: str, ticker: str):
     """Get the appropriate prediction model"""
     if model_type == "xgboost":
-        return MockXGBoostModel(ticker)
+        return XGBoostModel(ticker)
     elif model_type == "informer":
-        return MockInformerModel(ticker)
+        return InformerModel(ticker)
     elif model_type == "dqn":
-        return MockDQNModel(ticker)
+        return DQNAgent(ticker)
     else:
         raise ValueError(f"Unknown model type: {model_type}")
 

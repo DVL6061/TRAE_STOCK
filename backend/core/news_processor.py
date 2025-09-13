@@ -80,53 +80,117 @@ async def fetch_news(
     end_date: Optional[str] = None,
     limit: Optional[int] = 10
 ) -> List[Dict[str, Any]]:
-    """Fetch financial news based on ticker, keywords, and date range"""
+    """Fetch financial news using real NewsAPI integration"""
     try:
-        # In a real implementation, this would scrape news from various sources
-        # or use a news API. For now, we'll use mock data.
+        # Parse date parameters
+        from_date = None
+        to_date = None
         
-        # Filter by date range if provided
-        filtered_news = MOCK_TATA_MOTORS_NEWS.copy()
         if start_date:
-            start = datetime.fromisoformat(start_date)
-            filtered_news = [news for news in filtered_news 
-                            if datetime.fromisoformat(news["published_at"]) >= start]
+            from_date = datetime.fromisoformat(start_date)
+        else:
+            from_date = datetime.now() - timedelta(days=7)  # Default to 7 days back
+            
         if end_date:
-            end = datetime.fromisoformat(end_date)
-            filtered_news = [news for news in filtered_news 
-                            if datetime.fromisoformat(news["published_at"]) <= end]
+            to_date = datetime.fromisoformat(end_date)
+        else:
+            to_date = datetime.now()
         
-        # Filter by ticker if provided
-        if ticker and ticker.upper() != "TATAMOTORS.NS":
-            # For now, we only have mock data for Tata Motors
+        # Try to get cached articles first
+        if ticker:
+            cached_articles = news_db.get_articles(ticker, from_date)
+            
+            if cached_articles and len(cached_articles) >= (limit or 10):
+                logger.info(f"Using cached news for {ticker}: {len(cached_articles)} articles")
+                formatted_articles = []
+                
+                for article in cached_articles[:(limit or 10)]:
+                    # Filter by date range if specified
+                    article_date = article.published_at
+                    if article_date >= from_date and article_date <= to_date:
+                        formatted_articles.append({
+                            'title': article.title,
+                            'description': article.description,
+                            'source': article.source,
+                            'source_name': NEWS_SOURCES.get(article.source, article.source),
+                            'url': article.url,
+                            'published_at': article.published_at.isoformat(),
+                            'keywords': article.keywords.split(',') if article.keywords else [],
+                            'sentiment_score': article.sentiment_score
+                        })
+                
+                # Filter by keywords if provided
+                if keywords:
+                    keywords_lower = [k.lower() for k in keywords]
+                    formatted_articles = [
+                        article for article in formatted_articles
+                        if any(k in article['title'].lower() or k in article['description'].lower() 
+                               for k in keywords_lower)
+                    ]
+                
+                if formatted_articles:
+                    return formatted_articles
+        
+        # Fetch fresh articles if cache is insufficient
+        if news_api_fetcher and ticker:
+            logger.info(f"Fetching fresh news for {ticker} from NewsAPI")
+            fresh_articles = news_api_fetcher.fetch_articles(
+                ticker=ticker,
+                from_date=from_date,
+                limit=(limit or 10) * 2  # Fetch more to account for filtering
+            )
+            
+            # Save to cache and return formatted results
+            formatted_articles = []
+            for article in fresh_articles:
+                # Filter by date range
+                if article.published_at >= from_date and article.published_at <= to_date:
+                    # Save to database
+                    news_db.save_article(article)
+                    
+                    # Format for response
+                    formatted_article = {
+                        'title': article.title,
+                        'description': article.description,
+                        'source': article.source,
+                        'source_name': NEWS_SOURCES.get(article.source, article.source),
+                        'url': article.url,
+                        'published_at': article.published_at.isoformat(),
+                        'keywords': article.keywords.split(',') if article.keywords else [],
+                        'sentiment_score': article.sentiment_score
+                    }
+                    
+                    # Filter by keywords if provided
+                    if keywords:
+                        keywords_lower = [k.lower() for k in keywords]
+                        if any(k in formatted_article['title'].lower() or 
+                               k in formatted_article['description'].lower() 
+                               for k in keywords_lower):
+                            formatted_articles.append(formatted_article)
+                    else:
+                        formatted_articles.append(formatted_article)
+            
+            # Sort by date (newest first) and limit results
+            formatted_articles.sort(
+                key=lambda x: datetime.fromisoformat(x['published_at']),
+                reverse=True
+            )
+            
+            return formatted_articles[:(limit or 10)]
+        
+        # Fallback: try cached articles without ticker filtering
+        if not ticker and news_db:
+            logger.warning("No ticker specified, fetching general cached articles")
+            # This would require a different database method for general queries
+            # For now, return empty list
             return []
         
-        # Filter by keywords if provided
-        if keywords:
-            keywords_lower = [k.lower() for k in keywords]
-            filtered_news = [
-                news for news in filtered_news 
-                if any(k.lower() in news["title"].lower() or 
-                       k.lower() in news["description"].lower() 
-                       for k in keywords_lower)
-            ]
+        logger.warning(f"No news data available for ticker: {ticker}")
+        return []
         
-        # Sort by date (newest first) and limit results
-        filtered_news.sort(
-            key=lambda x: datetime.fromisoformat(x["published_at"]),
-            reverse=True
-        )
-        if limit:
-            filtered_news = filtered_news[:limit]
-        
-        # Add source name from source ID
-        for news in filtered_news:
-            news["source_name"] = MOCK_NEWS_SOURCES.get(news["source"], news["source"])
-        
-        return filtered_news
     except Exception as e:
         logger.error(f"Error fetching news: {str(e)}")
-        raise Exception(f"Failed to fetch news: {str(e)}")
+        return []  # Return empty list instead of raising exception
 
 # Initialize FinGPT sentiment analyzer (singleton pattern)
 _sentiment_analyzer = None
@@ -150,7 +214,7 @@ def get_sentiment_analyzer():
     return _sentiment_analyzer
 
 async def analyze_sentiment(text: str) -> Dict[str, Any]:
-    """Analyze sentiment of provided text using FinGPT"""
+    """Analyze sentiment of provided text using FinGPT or SentimentModel"""
     try:
         analyzer = get_sentiment_analyzer()
         
@@ -160,7 +224,7 @@ async def analyze_sentiment(text: str) -> Dict[str, Any]:
             return await mock_analyze_sentiment(text)
         
         # Use FinGPT analyzer if available
-        if hasattr(analyzer, 'analyze_text_sentiment'):
+        if isinstance(analyzer, FinGPTSentimentAnalyzer):
             # FinGPTSentimentAnalyzer
             result = analyzer.analyze_text_sentiment(text)
             
@@ -169,24 +233,27 @@ async def analyze_sentiment(text: str) -> Dict[str, Any]:
                 "score": result.get('score', 0.0),
                 "label": result.get('sentiment', 'neutral').lower(),
                 "confidence": result.get('confidence', 0.0),
-                "method": result.get('method', 'fingpt'),
-                "positive_aspects": result.get('component_results', {}).get('keywords', {}).get('positive_count', 0),
-                "negative_aspects": result.get('component_results', {}).get('keywords', {}).get('negative_count', 0)
+                "method": "fingpt",
+                "positive_aspects": result.get('component_results', {}).get('keywords', {}).get('positive_keywords', []),
+                "negative_aspects": result.get('component_results', {}).get('keywords', {}).get('negative_keywords', [])
             }
-        else:
+        elif isinstance(analyzer, SentimentModel):
             # SentimentModel fallback
             result = analyzer.analyze_sentiment(text)
             
             # Convert SentimentModel result format to our standard format
-            sentiment_score = result.get('sentiment_score', 0.0)
             return {
-                "score": sentiment_score,
-                "label": result.get('sentiment', 'neutral'),
+                "score": result.get('score', 0.0),
+                "label": result.get('sentiment', 'neutral').lower(),
                 "confidence": result.get('confidence', 0.0),
                 "method": "finbert",
                 "positive_aspects": [],
                 "negative_aspects": []
             }
+        else:
+            # Unknown analyzer type, fallback to mock
+            logger.warning(f"Unknown analyzer type: {type(analyzer)}, using mock analysis")
+            return await mock_analyze_sentiment(text)
             
     except Exception as e:
         logger.error(f"Error analyzing sentiment: {str(e)}")

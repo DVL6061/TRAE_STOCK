@@ -24,12 +24,15 @@ import gzip
 import asyncio
 from contextlib import asynccontextmanager
 
+from ..core.config import get_settings
+
 logger = logging.getLogger(__name__)
 
 class CacheManager:
     """Advanced caching manager with Redis and in-memory fallback"""
     
-    def __init__(self, redis_url: str = "redis://localhost:6379", default_ttl: int = 3600):
+    def __init__(self, redis_url: Optional[str] = None, default_ttl: int = 3600):
+        self.settings = get_settings()
         self.default_ttl = default_ttl
         self.redis_client = None
         self.memory_cache = {}
@@ -40,12 +43,26 @@ class CacheManager:
             'errors': 0
         }
         
+        # Use Redis URL from config if not provided
+        redis_url = redis_url or self.settings.redis_url
+        
         try:
-            self.redis_client = redis.from_url(redis_url, decode_responses=False)
-            self.redis_client.ping()
-            logger.info("Redis cache initialized successfully")
+            if redis_url:
+                self.redis_client = redis.from_url(
+                    redis_url, 
+                    decode_responses=False,
+                    socket_connect_timeout=5,
+                    socket_timeout=5,
+                    retry_on_timeout=True,
+                    health_check_interval=30
+                )
+                self.redis_client.ping()
+                logger.info(f"Redis cache initialized successfully at {redis_url}")
+            else:
+                logger.warning("No Redis URL configured, using memory cache only")
         except Exception as e:
             logger.warning(f"Redis not available, using memory cache: {e}")
+            self.redis_client = None
     
     def _generate_key(self, prefix: str, *args, **kwargs) -> str:
         """Generate cache key from arguments"""
@@ -183,6 +200,36 @@ class CacheManager:
             logger.error(f"Cache delete error: {e}")
             return False
     
+    async def health_check(self) -> Dict[str, Any]:
+        """Check Redis connection health"""
+        redis_status = {
+            'available': False,
+            'latency_ms': None,
+            'memory_usage': None,
+            'error': None
+        }
+        
+        if self.redis_client:
+            try:
+                start_time = time.time()
+                await asyncio.get_event_loop().run_in_executor(
+                    None, self.redis_client.ping
+                )
+                redis_status['latency_ms'] = round((time.time() - start_time) * 1000, 2)
+                redis_status['available'] = True
+                
+                # Get Redis memory info
+                info = await asyncio.get_event_loop().run_in_executor(
+                    None, self.redis_client.info, 'memory'
+                )
+                redis_status['memory_usage'] = info.get('used_memory_human', 'Unknown')
+                
+            except Exception as e:
+                redis_status['error'] = str(e)
+                logger.error(f"Redis health check failed: {e}")
+        
+        return redis_status
+    
     def get_stats(self) -> Dict[str, Any]:
         """Get cache statistics"""
         total_requests = self.cache_stats['hits'] + self.cache_stats['misses']
@@ -192,7 +239,8 @@ class CacheManager:
             **self.cache_stats,
             'hit_rate': round(hit_rate, 2),
             'memory_cache_size': len(self.memory_cache),
-            'redis_available': self.redis_client is not None
+            'redis_available': self.redis_client is not None,
+            'default_ttl': self.default_ttl
         }
 
 class PerformanceOptimizer:
@@ -471,8 +519,9 @@ class ResponseOptimizer:
             }
         }
 
-# Global instances
-cache_manager = CacheManager()
+# Global instances - initialized with config settings
+settings = get_settings()
+cache_manager = CacheManager(default_ttl=settings.cache_ttl)
 performance_optimizer = PerformanceOptimizer(cache_manager)
 model_optimizer = ModelInferenceOptimizer(cache_manager)
 response_optimizer = ResponseOptimizer()
