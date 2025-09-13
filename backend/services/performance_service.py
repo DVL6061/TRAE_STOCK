@@ -546,8 +546,11 @@ async def performance_context():
 # Utility functions
 async def get_performance_metrics() -> Dict[str, Any]:
     """Get comprehensive performance metrics"""
+    redis_health = await cache_manager.health_check()
+    
     return {
         'cache_stats': cache_manager.get_stats(),
+        'redis_health': redis_health,
         'performance_stats': performance_optimizer.get_performance_stats(),
         'timestamp': datetime.now().isoformat()
     }

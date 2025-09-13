@@ -1,10 +1,15 @@
 import logging
 import traceback
-from typing import Optional, Dict, Any
+import uuid
+from typing import Optional, Dict, Any, List
 from datetime import datetime
 from fastapi import HTTPException, Request
 from fastapi.responses import JSONResponse
 import json
+import asyncio
+from contextlib import asynccontextmanager
+
+from .config import get_settings
 
 # Configure logging
 logging.basicConfig(
@@ -57,18 +62,53 @@ class APIError(StockPredictionError):
         details = {"api_name": api_name, "status_code": status_code}
         super().__init__(message, "API_ERROR", details)
 
+class ValidationError(StockPredictionError):
+    """Exception raised when data validation fails"""
+    def __init__(self, message: str, field: str = None, value: Any = None):
+        details = {"field": field, "value": str(value) if value is not None else None}
+        super().__init__(message, "VALIDATION_ERROR", details)
+
+class CacheError(StockPredictionError):
+    """Exception raised when cache operations fail"""
+    def __init__(self, message: str, operation: str = None, key: str = None):
+        details = {"operation": operation, "key": key}
+        super().__init__(message, "CACHE_ERROR", details)
+
+class DatabaseError(StockPredictionError):
+    """Exception raised when database operations fail"""
+    def __init__(self, message: str, operation: str = None, table: str = None):
+        details = {"operation": operation, "table": table}
+        super().__init__(message, "DATABASE_ERROR", details)
+
+class RateLimitError(StockPredictionError):
+    """Exception raised when API rate limits are exceeded"""
+    def __init__(self, message: str, api_name: str = None, retry_after: int = None):
+        details = {"api_name": api_name, "retry_after": retry_after}
+        super().__init__(message, "RATE_LIMIT_ERROR", details)
+
 class ErrorHandler:
     """Centralized error handling and logging"""
     
-    @staticmethod
-    def log_error(error: Exception, context: Dict[str, Any] = None):
-        """Log error with context information"""
+    def __init__(self):
+        self.settings = get_settings()
+        self.error_counts = {}
+        self.error_history = []
+        self.max_history_size = 1000
+    
+    def log_error(self, error: Exception, context: Dict[str, Any] = None, request_id: str = None):
+        """Log error with context information and tracking"""
+        error_id = str(uuid.uuid4())
+        request_id = request_id or str(uuid.uuid4())
+        
         error_info = {
+            "error_id": error_id,
+            "request_id": request_id,
             "error_type": type(error).__name__,
             "error_message": str(error),
             "timestamp": datetime.now().isoformat(),
-            "traceback": traceback.format_exc(),
-            "context": context or {}
+            "traceback": traceback.format_exc() if self.settings.debug else None,
+            "context": context or {},
+            "environment": self.settings.environment
         }
         
         if isinstance(error, StockPredictionError):
@@ -77,18 +117,37 @@ class ErrorHandler:
                 "details": error.details
             })
         
+        # Track error counts
+        error_type = type(error).__name__
+        self.error_counts[error_type] = self.error_counts.get(error_type, 0) + 1
+        
+        # Add to history (with size limit)
+        self.error_history.append(error_info)
+        if len(self.error_history) > self.max_history_size:
+            self.error_history.pop(0)
+        
         logger.error(f"Error occurred: {json.dumps(error_info, indent=2)}")
         return error_info
     
-    @staticmethod
-    def handle_data_fetch_error(error: Exception, source: str = None, symbol: str = None) -> DataFetchError:
+    def get_error_stats(self) -> Dict[str, Any]:
+        """Get error statistics"""
+        return {
+            "error_counts": self.error_counts,
+            "total_errors": sum(self.error_counts.values()),
+            "recent_errors": len([e for e in self.error_history 
+                                 if datetime.fromisoformat(e['timestamp']) > 
+                                 datetime.now().replace(hour=datetime.now().hour-1)]),
+            "history_size": len(self.error_history)
+        }
+    
+    def handle_data_fetch_error(self, error: Exception, source: str = None, symbol: str = None) -> DataFetchError:
         """Handle data fetching errors"""
         if isinstance(error, DataFetchError):
             return error
         
         message = f"Failed to fetch data: {str(error)}"
         data_error = DataFetchError(message, source, symbol)
-        ErrorHandler.log_error(data_error)
+        self.log_error(data_error)
         return data_error
     
     @staticmethod
@@ -236,10 +295,59 @@ def log_info(message: str, context: Dict[str, Any] = None):
     logger.info(json.dumps(log_data))
 
 def log_warning(message: str, context: Dict[str, Any] = None):
-    """Log warning message with context"""
+    """Log warning message"""
     log_data = {
         "message": message,
         "timestamp": datetime.now().isoformat(),
         "context": context or {}
     }
     logger.warning(json.dumps(log_data))
+
+class CircuitBreaker:
+    """Circuit breaker pattern for handling repeated failures"""
+    
+    def __init__(self, failure_threshold: int = 5, recovery_timeout: int = 60):
+        self.failure_threshold = failure_threshold
+        self.recovery_timeout = recovery_timeout
+        self.failure_count = 0
+        self.last_failure_time = None
+        self.state = "CLOSED"  # CLOSED, OPEN, HALF_OPEN
+    
+    def call(self, func, *args, **kwargs):
+        """Execute function with circuit breaker protection"""
+        if self.state == "OPEN":
+            if self._should_attempt_reset():
+                self.state = "HALF_OPEN"
+            else:
+                raise StockPredictionError("Circuit breaker is OPEN", "CIRCUIT_BREAKER_OPEN")
+        
+        try:
+            result = func(*args, **kwargs)
+            self._on_success()
+            return result
+        except Exception as e:
+            self._on_failure()
+            raise e
+    
+    def _should_attempt_reset(self) -> bool:
+        """Check if enough time has passed to attempt reset"""
+        if self.last_failure_time is None:
+            return True
+        return (datetime.now() - self.last_failure_time).seconds >= self.recovery_timeout
+    
+    def _on_success(self):
+        """Handle successful execution"""
+        self.failure_count = 0
+        self.state = "CLOSED"
+    
+    def _on_failure(self):
+        """Handle failed execution"""
+        self.failure_count += 1
+        self.last_failure_time = datetime.now()
+        
+        if self.failure_count >= self.failure_threshold:
+            self.state = "OPEN"
+
+# Global instances
+error_handler = ErrorHandler()
+circuit_breaker = CircuitBreaker()
