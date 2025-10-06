@@ -10,7 +10,7 @@ from typing import Dict, List, Tuple, Union, Optional
 # Add the project root to the Python path
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..')))
 
-from backend.ML_models.model_factory import model_factory
+from backend.ML_models.model_factory import ModelFactory
 from backend.core.data_fetcher import fetch_historical_data, calculate_technical_indicators
 from backend.core.news_processor import fetch_news, analyze_news_sentiment
 from backend.utils.config import TECHNICAL_INDICATORS, PREDICTION_WINDOWS
@@ -67,7 +67,7 @@ def prepare_training_data(ticker: str, start_date: str, end_date: str) -> pd.Dat
     
     # Analyze news sentiment
     if not news_data.empty:
-        sentiment_model = model_factory.get_sentiment_model()
+        sentiment_model = ModelFactory.get_sentiment_model()
         
         # Group news by date
         news_data['date'] = pd.to_datetime(news_data['date']).dt.date
@@ -171,17 +171,17 @@ def train_models(ticker: str, start_date: str, end_date: str, models: List[str],
             
             try:
                 if model_type.lower() == 'xgboost':
-                    model = model_factory.get_price_prediction_model('xgboost', ticker, timeframe)
+                    model = ModelFactory.get_price_prediction_model('xgboost', ticker, timeframe)
                     model.target_column = f'future_close_{timeframe}'
                     model.train(data_with_targets, feature_columns)
                     
                 elif model_type.lower() == 'informer':
-                    model = model_factory.get_price_prediction_model('informer', ticker, timeframe)
+                    model = ModelFactory.get_price_prediction_model('informer', ticker, timeframe)
                     model.target_column = f'future_close_{timeframe}'
                     model.train(data_with_targets, feature_columns)
                     
                 elif model_type.lower() == 'dqn':
-                    model = model_factory.get_trading_model(ticker, timeframe)
+                    model = ModelFactory.get_trading_model(ticker, timeframe)
                     model.train(data_with_targets, feature_columns)
                     
                 else:
